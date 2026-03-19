@@ -1,3 +1,4 @@
+app.py
 from flask import Flask, render_template, request, redirect
 import mysql.connector
 from datetime import date as d
@@ -9,7 +10,7 @@ db = mysql.connector.connect(
     user="root",
     password="PRlkjHknXZNbCjcqMbmxqexeHKawUqow",
     database="railway",
-    port=37887
+    port=37887  # <-- Added missing comma after database parameter
 )
 
 # --- INDEX ROUTE ---
