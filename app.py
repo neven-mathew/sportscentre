@@ -1,15 +1,11 @@
+app.py
 from flask import Flask, render_template, request, redirect
 import mysql.connector
 from mysql.connector import Error
 from datetime import date as d
 import os
-import sys
 
 app = Flask(__name__)
-
-# Print Python path for debugging
-print("Python executable:", sys.executable)
-print("Python version:", sys.version)
 
 # Database configuration
 DB_CONFIG = {
@@ -23,35 +19,49 @@ DB_CONFIG = {
 def get_db_connection():
     """Create database connection with error handling"""
     try:
-        print("Attempting to connect to database...")
         connection = mysql.connector.connect(**DB_CONFIG)
-        print("Database connection successful!")
         return connection
     except Error as e:
         print(f"MySQL Connection Error: {e}")
         return None
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return None
 
-# Test database connection on startup
-print("Testing database connection on startup...")
-test_conn = get_db_connection()
-if test_conn:
-    print("Database connection test: SUCCESS")
-    test_conn.close()
-else:
-    print("Database connection test: FAILED")
-
-@app.route('/health')
-def health():
-    """Health check endpoint"""
+def fix_table_structure():
+    """Fix the table structure without dropping data"""
     db = get_db_connection()
-    if db:
+    if db is None:
+        print("Failed to connect to database")
+        return False
+    
+    cursor = db.cursor()
+    
+    try:
+        # Check current table structure
+        cursor.execute("SHOW COLUMNS FROM bookings")
+        columns = cursor.fetchall()
+        print("Current table structure:", columns)
+        
+        # Modify the id column to be AUTO_INCREMENT
+        cursor.execute("""
+            ALTER TABLE bookings 
+            MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT
+        """)
+        db.commit()
+        print("Successfully modified id column to AUTO_INCREMENT")
+        
+        cursor.close()
         db.close()
-        return "Database connection OK", 200
-    else:
-        return "Database connection failed", 500
+        return True
+        
+    except Error as e:
+        print(f"Error fixing table structure: {e}")
+        db.rollback()
+        cursor.close()
+        db.close()
+        return False
+
+# Try to fix table structure on startup
+print("Checking and fixing table structure...")
+fix_table_structure()
 
 # --- INDEX ROUTE ---
 @app.route('/', methods=['GET'])
@@ -59,34 +69,13 @@ def index():
     try:
         db = get_db_connection()
         if db is None:
-            return "Database connection failed. Please check your database configuration.", 500
+            return "Database connection failed", 500
         
         cursor = db.cursor()
 
-        # Check if bookings table exists
-        cursor.execute("SHOW TABLES LIKE 'bookings'")
-        table_exists = cursor.fetchone()
-        
-        if not table_exists:
-            # Create bookings table if it doesn't exist
-            cursor.execute("""
-                CREATE TABLE bookings (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    name VARCHAR(255) NOT NULL,
-                    sport VARCHAR(100) NOT NULL,
-                    turf VARCHAR(10) NOT NULL,
-                    slot_time VARCHAR(20) NOT NULL,
-                    booking_date DATE NOT NULL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            db.commit()
-            print("Bookings table created successfully")
-            all_bookings = []
-        else:
-            # Get all bookings
-            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time")
-            all_bookings = cursor.fetchall()
+        # Get all bookings
+        cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time")
+        all_bookings = cursor.fetchall()
 
         # Get selected date
         selected_date = request.args.get("date")
@@ -123,8 +112,6 @@ def index():
     
     except Exception as e:
         print(f"Error in index route: {e}")
-        import traceback
-        traceback.print_exc()
         return f"An error occurred: {str(e)}", 500
 
 # --- BOOK ROUTE ---
@@ -167,6 +154,7 @@ def book():
         """, (name, sport, turf, slot, booking_date))
 
         db.commit()
+        
         cursor.close()
         db.close()
         
@@ -174,8 +162,6 @@ def book():
     
     except Exception as e:
         print(f"Error in book route: {e}")
-        import traceback
-        traceback.print_exc()
         return f"An error occurred while booking: {str(e)}", 500
 
 # --- CANCEL ROUTES ---
@@ -227,5 +213,37 @@ def confirmcancel(id):
         print(f"Error in confirmcancel route: {e}")
         return f"An error occurred while cancelling: {str(e)}", 500
 
+@app.route('/check-db')
+def check_db():
+    """Endpoint to check database structure"""
+    db = get_db_connection()
+    if db is None:
+        return "Database connection failed", 500
+    
+    cursor = db.cursor()
+    
+    try:
+        # Show table structure
+        cursor.execute("SHOW COLUMNS FROM bookings")
+        columns = cursor.fetchall()
+        
+        result = "Table structure:\n"
+        for col in columns:
+            result += f"{col[0]} - {col[1]} - Null: {col[2]} - Key: {col[3]} - Default: {col[4]} - Extra: {col[5]}\n"
+        
+        # Show some data
+        cursor.execute("SELECT COUNT(*) FROM bookings")
+        count = cursor.fetchone()[0]
+        result += f"\nTotal records: {count}"
+        
+        cursor.close()
+        db.close()
+        
+        return f"<pre>{result}</pre>"
+        
+    except Error as e:
+        return f"Error: {e}", 500
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
