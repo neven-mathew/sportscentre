@@ -1,3 +1,4 @@
+cancel.html
 <!DOCTYPE html>
 <html>
 
@@ -10,16 +11,16 @@
 
 <h2>Cancel Booking</h2>
 
-<p>Name: {{booking[1]}}</p>
-<p>Sport: {{booking[2]}}</p>
-<p>Turf: {{booking[3]}}</p>
-<p>Time: {{booking[4]}}</p>
-<p>Date: {{booking[5]}}</p>
+<p><strong>Name:</strong> {{booking[1]}}</p>
+<p><strong>Sport:</strong> {{booking[2]}}</p>
+<p><strong>Turf:</strong> {{booking[3]}}</p>
+<p><strong>Time:</strong> {{booking[4]}}</p>
+<p><strong>Date:</strong> {{booking[5]}}</p>
 
 <!-- ================= CANCEL CONFIRM BUTTON ================= -->
-<a href="/confirmcancel/{{booking[0]}}">
-<button class="cancelbtn">Confirm Cancel</button>
-</a>
+<form action="/confirmcancel/{{booking[0]}}" method="POST" style="display: inline;">
+    <button type="submit" class="cancelbtn">Confirm Cancel</button>
+</form>
 <!-- ========================================================= -->
 
 <br><br>
