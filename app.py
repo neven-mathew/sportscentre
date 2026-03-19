@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect
 import mysql.connector
 from mysql.connector import Error
-from datetime import date as d
+from datetime import date as d, datetime
 import os
 
 app = Flask(__name__)
@@ -23,44 +23,6 @@ def get_db_connection():
     except Error as e:
         print(f"MySQL Connection Error: {e}")
         return None
-
-def fix_table_structure():
-    """Fix the table structure without dropping data"""
-    db = get_db_connection()
-    if db is None:
-        print("Failed to connect to database")
-        return False
-    
-    cursor = db.cursor()
-    
-    try:
-        # Check current table structure
-        cursor.execute("SHOW COLUMNS FROM bookings")
-        columns = cursor.fetchall()
-        print("Current table structure:", columns)
-        
-        # Modify the id column to be AUTO_INCREMENT
-        cursor.execute("""
-            ALTER TABLE bookings 
-            MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT
-        """)
-        db.commit()
-        print("Successfully modified id column to AUTO_INCREMENT")
-        
-        cursor.close()
-        db.close()
-        return True
-        
-    except Error as e:
-        print(f"Error fixing table structure: {e}")
-        db.rollback()
-        cursor.close()
-        db.close()
-        return False
-
-# Try to fix table structure on startup
-print("Checking and fixing table structure...")
-fix_table_structure()
 
 # --- INDEX ROUTE ---
 @app.route('/', methods=['GET'])
@@ -89,6 +51,9 @@ def index():
         )
         booked = [row[0] for row in cursor.fetchall()]
 
+        # Get today's date for min attribute
+        today_date = d.today().strftime("%Y-%m-%d")
+
         # Slots
         slots = [
             "06:00 AM","07:00 AM","08:00 AM","09:00 AM",
@@ -106,7 +71,8 @@ def index():
             bookings=all_bookings,
             slots=slots,
             booked=booked,
-            date=selected_date
+            date=selected_date,
+            today_date=today_date
         )
     
     except Exception as e:
@@ -132,6 +98,13 @@ def book():
         # Validate inputs
         if not all([name, sport, turf, slot, booking_date]):
             return "All fields are required!", 400
+
+        # Check if booking date is in the past
+        today = d.today()
+        selected_date = datetime.strptime(booking_date, '%Y-%m-%d').date()
+        
+        if selected_date < today:
+            return "Cannot book for past dates! Please select today or a future date.", 400
 
         # Check if slot already booked
         cursor.execute("""
@@ -211,37 +184,6 @@ def confirmcancel(id):
     except Exception as e:
         print(f"Error in confirmcancel route: {e}")
         return f"An error occurred while cancelling: {str(e)}", 500
-
-@app.route('/check-db')
-def check_db():
-    """Endpoint to check database structure"""
-    db = get_db_connection()
-    if db is None:
-        return "Database connection failed", 500
-    
-    cursor = db.cursor()
-    
-    try:
-        # Show table structure
-        cursor.execute("SHOW COLUMNS FROM bookings")
-        columns = cursor.fetchall()
-        
-        result = "Table structure:\n"
-        for col in columns:
-            result += f"{col[0]} - {col[1]} - Null: {col[2]} - Key: {col[3]} - Default: {col[4]} - Extra: {col[5]}\n"
-        
-        # Show some data
-        cursor.execute("SELECT COUNT(*) FROM bookings")
-        count = cursor.fetchone()[0]
-        result += f"\nTotal records: {count}"
-        
-        cursor.close()
-        db.close()
-        
-        return f"<pre>{result}</pre>"
-        
-    except Error as e:
-        return f"Error: {e}", 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
