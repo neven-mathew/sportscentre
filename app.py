@@ -141,7 +141,7 @@ def cancelpage(id):
 
     return render_template("cancel.html", booking=booking)
 
-@app.route('/confirmcancel/<int:id>')
+@app.route('/confirmcancel/<int:id>', methods=['POST'])
 def confirmcancel(id):
     db = get_db_connection()
     if db is None:
@@ -162,7 +162,6 @@ def confirmcancel(id):
         cursor.close()
         db.close()
         return f"An error occurred while cancelling: {e}", 500
-
 if __name__ == '__main__':
     app.run(debug=True)
     password="PRlkjHknXZNbCjcqMbmxqexeHKawUqow",
