@@ -31,7 +31,8 @@
 <option value="A2">A2</option>
 </select>
 
-<input type="date" name="date" required>
+<!-- Date input with min attribute to block past dates -->
+<input type="date" name="date" min="{{ today_date }}" required>
 
 <h3>Select Slot</h3>
 
@@ -59,49 +60,6 @@
 Confirm Booking
 </button>
 
-<script>
-
-function loadSlots(){
-
-let date = document.querySelector("input[name='date']").value;
-let turf = document.querySelector("select[name='turf']").value;
-
-fetch(`/slots?date=${date}&turf=${turf}`)
-.then(response => response.json())
-.then(booked => {
-
-let buttons = document.querySelectorAll(".slotbtn");
-
-buttons.forEach(btn => {
-
-if(booked.includes(btn.value)){
-
-btn.classList.remove("available");
-btn.classList.add("booked");
-btn.disabled = true;
-
-}else{
-
-btn.classList.remove("booked");
-btn.classList.add("available");
-btn.disabled = false;
-
-}
-
-});
-
-});
-
-}
-
-/* LIVE UPDATE EVERY 5 SECONDS */
-
-setInterval(loadSlots,5000);
-
-window.onload = loadSlots;
-
-</script>
-
 </form>
 
 <h2>Booked Slots</h2>
@@ -123,10 +81,6 @@ window.onload = loadSlots;
         <button class="available" type="button">{{ s }}</button>
     {% endif %}
 {% endfor %}
-
-<button class="slotbtn available" name="slot" value="06:00 PM">6:00 PM</button>
-<button class="slotbtn available" name="slot" value="07:00 PM">7:00 PM</button>
-<button class="slotbtn available" name="slot" value="08:00 PM">8:00 PM</button>
 
 </div>
 
