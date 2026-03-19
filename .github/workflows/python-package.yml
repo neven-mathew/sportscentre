@@ -19,7 +19,7 @@ jobs:
         image: mysql:8
         env:
           MYSQL_ROOT_PASSWORD: 2006
-          MYSQL_DATABASE: sportscenter
+          MYSQL_DATABASE: sportscentre
         ports:
           - 3306:3306
         options: >-
