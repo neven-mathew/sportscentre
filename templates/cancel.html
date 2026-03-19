@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Cancel Booking</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<h2>Cancel Booking</h2>
+
+<p>Name: {{booking[1]}}</p>
+<p>Sport: {{booking[2]}}</p>
+<p>Turf: {{booking[3]}}</p>
+<p>Time: {{booking[4]}}</p>
+<p>Date: {{booking[5]}}</p>
+
+<!-- ================= CANCEL CONFIRM BUTTON ================= -->
+<a href="/confirmcancel/{{booking[0]}}">
+<button class="cancelbtn">Confirm Cancel</button>
+</a>
+<!-- ========================================================= -->
+
+<br><br>
+
+<a href="/">
+<button>Go Back</button>
+</a>
+
+</body>
+
+</html>

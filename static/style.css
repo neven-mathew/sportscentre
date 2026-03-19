@@ -1,0 +1,138 @@
+/* ================= BACKGROUND ================= */
+body{
+    font-family: Arial, sans-serif;
+    background-color:#f3f6fb;
+    text-align:center;
+    margin:0;
+    padding:0;
+}
+
+h1{
+    color:#1e3a8a;
+}
+
+/* ================= SPORTS IMAGES ================= */
+.sports{
+    margin:20px;
+}
+
+.sportimg{
+    width:300px;
+    margin:10px;
+    border-radius:10px;
+}
+
+/* ================= SLOT GRID ================= */
+.slots{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(120px, 1fr));
+    gap:10px;
+    justify-content:center;
+    margin:20px auto;
+    max-width:700px;
+}
+
+/* ================= RADIO SLOT STYLE ================= */
+.slots label{
+    display:block;
+    padding:10px;
+    border-radius:6px;
+    cursor:pointer;
+    background:#e5e7eb;
+    transition:0.3s;
+}
+
+/* Hide default radio */
+.slot-radio{
+    display:none;
+}
+
+/* When available */
+.slot-radio:not(:disabled) + span{
+    color:black;
+}
+
+/* Hover effect */
+.slots label:hover{
+    background:#22c55e;
+    color:white;
+}
+
+/* Selected slot */
+.slot-radio:checked + span{
+    background:#16a34a;
+    color:white;
+    padding:5px;
+    border-radius:4px;
+}
+
+/* Booked slot */
+.slot-radio:disabled + span{
+    background:#ef4444;
+    color:white;
+    cursor:not-allowed;
+    padding:5px;
+    border-radius:4px;
+}
+
+/* ================= TABLE ================= */
+table{
+    margin:auto;
+    margin-top:30px;
+    border-collapse:collapse;
+    width:80%;
+}
+
+th,td{
+    padding:10px;
+    border:1px solid gray;
+}
+
+/* ================= BUTTONS ================= */
+.confirmbtn{
+    background:#16a34a;
+    color:white;
+    padding:10px 20px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+.confirmbtn:hover{
+    background:#15803d;
+}
+
+.cancelbtn{
+    background:#dc2626;
+    color:white;
+    padding:8px 15px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.cancelbtn:hover{
+    background:#b91c1c;
+}
+
+/* ================= STATUS COLORS ================= */
+.available{
+    background:#22c55e;
+    color:white;
+}
+
+.booked{
+    background:#ef4444;
+    color:white;
+}
+
+/* ================= ADMIN LINK ================= */
+.admin-link{
+    position:absolute;
+    top:10px;
+    right:20px;
+    text-decoration:none;
+    color:#1e3a8a;
+    font-weight:bold;
+}

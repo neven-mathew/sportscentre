@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sports Centre</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+
+<h1>Sports Centre Booking</h1>
+
+<div class="sports">
+<img src="/static/images/football.jpg" class="sportimg" alt="Football">
+<img src="/static/images/volleyball.jpg" class="sportimg" alt="Volleyball">
+</div>
+
+<form action="/book" method="POST">
+
+<input type="text" name="name" placeholder="Your Name" required>
+
+<select name="sport" required>
+<option value="">Select Sport</option>
+<option value="Football">Football</option>
+<option value="Volleyball">Volleyball</option>
+</select>
+
+<select name="turf" required>
+<option value="">Select Turf</option>
+<option value="A1">A1</option>
+<option value="A2">A2</option>
+</select>
+
+<input type="date" name="date" required>
+
+<h3>Select Slot</h3>
+
+<div class="slots">
+
+<label><input type="radio" name="slot" value="06:00 AM" required>6:00 AM</label>
+<label><input type="radio" name="slot" value="07:00 AM">7:00 AM</label>
+<label><input type="radio" name="slot" value="08:00 AM">8:00 AM</label>
+<label><input type="radio" name="slot" value="09:00 AM">9:00 AM</label>
+<label><input type="radio" name="slot" value="10:00 AM">10:00 AM</label>
+<label><input type="radio" name="slot" value="11:00 AM">11:00 AM</label>
+<label><input type="radio" name="slot" value="12:00 PM">12:00 PM</label>
+<label><input type="radio" name="slot" value="01:00 PM">1:00 PM</label>
+<label><input type="radio" name="slot" value="02:00 PM">2:00 PM</label>
+<label><input type="radio" name="slot" value="03:00 PM">3:00 PM</label>
+<label><input type="radio" name="slot" value="04:00 PM">4:00 PM</label>
+<label><input type="radio" name="slot" value="05:00 PM">5:00 PM</label>
+<label><input type="radio" name="slot" value="06:00 PM">6:00 PM</label>
+<label><input type="radio" name="slot" value="07:00 PM">7:00 PM</label>
+<label><input type="radio" name="slot" value="08:00 PM">8:00 PM</label>
+
+</div>
+
+<button type="submit" class="confirmbtn">
+Confirm Booking
+</button>
+
+<script>
+
+function loadSlots(){
+
+let date = document.querySelector("input[name='date']").value;
+let turf = document.querySelector("select[name='turf']").value;
+
+fetch(`/slots?date=${date}&turf=${turf}`)
+.then(response => response.json())
+.then(booked => {
+
+let buttons = document.querySelectorAll(".slotbtn");
+
+buttons.forEach(btn => {
+
+if(booked.includes(btn.value)){
+
+btn.classList.remove("available");
+btn.classList.add("booked");
+btn.disabled = true;
+
+}else{
+
+btn.classList.remove("booked");
+btn.classList.add("available");
+btn.disabled = false;
+
+}
+
+});
+
+});
+
+}
+
+/* LIVE UPDATE EVERY 5 SECONDS */
+
+setInterval(loadSlots,5000);
+
+window.onload = loadSlots;
+
+</script>
+
+</form>
+
+<h2>Booked Slots</h2>
+
+<form method="GET">
+<label>Select Date:</label>
+<input type="date" name="date" value="{{ date }}">
+<button type="submit">View Slots</button>
+</form>
+
+<div class="slots">
+
+{% for s in slots %}
+    {% if s in booked %}
+        <!-- 🔴 BOOKED SLOT -->
+        <button class="booked" disabled type="button">{{ s }}</button>
+    {% else %}
+        <!-- 🟢 AVAILABLE SLOT -->
+        <button class="available" type="button">{{ s }}</button>
+    {% endif %}
+{% endfor %}
+
+<button class="slotbtn available" name="slot" value="06:00 PM">6:00 PM</button>
+<button class="slotbtn available" name="slot" value="07:00 PM">7:00 PM</button>
+<button class="slotbtn available" name="slot" value="08:00 PM">8:00 PM</button>
+
+</div>
+
+<table>
+
+<tr>
+<th>Name</th>
+<th>Sport</th>
+<th>Turf</th>
+<th>Time</th>
+<th>Date</th>
+<th>Cancel</th>
+</tr>
+
+{% for b in bookings %}
+<tr>
+<td>{{ b[1] }}</td>
+<td>{{ b[2] }}</td>
+<td>{{ b[3] }}</td>
+<td>{{ b[4] }}</td>
+<td>{{ b[5] }}</td>
+<td>
+<a href="/cancelpage/{{ b[0] }}">Cancel</a>
+</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+</html>
