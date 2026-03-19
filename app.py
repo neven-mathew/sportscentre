@@ -5,10 +5,11 @@ from datetime import date as d
 app = Flask(__name__)
 
 db = mysql.connector.connect(
-    host="localhost",
+    host="autorack.proxy.rlwy.net",
     user="root",
-    password="2006",
-    database="sportscentre"
+    password="PRlkjHknXZNbCjcqMbmxqexeHKawUqow",
+    database="railway"
+    port=37887
 )
 
 # --- INDEX ROUTE ---
