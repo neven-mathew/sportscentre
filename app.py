@@ -214,14 +214,18 @@ def mybookings():
         
         cursor = db.cursor()
         
-        # Ensure status column exists
+        # Check if status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        if not cursor.fetchone():
+        status_exists = cursor.fetchone() is not None
+        
+        # If column doesn't exist, add it (optional)
+        if not status_exists:
             try:
                 cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
                 db.commit()
                 cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
                 db.commit()
+                status_exists = True
             except Exception as e:
                 print(f"Error adding status column: {e}")
         
@@ -231,7 +235,7 @@ def mybookings():
         cursor.close()
         db.close()
         
-        # Normalize status to lowercase and ensure it's a string
+        # Normalize status to lowercase
         normalized_bookings = []
         for b in raw_bookings:
             booking_list = list(b)
@@ -240,31 +244,22 @@ def mybookings():
                 if status is None:
                     status = 'pending'
                 else:
-                    status = status.lower()
+                    status = str(status).lower()
                 booking_list[6] = status
             normalized_bookings.append(tuple(booking_list))
         
-        # Calculate statistics
+        # Calculate statistics (optional, if you still want them)
         total = len(normalized_bookings)
-        confirmed = 0
-        pending = 0
-        for b in normalized_bookings:
-            if len(b) > 6:
-                if b[6] == 'confirmed':
-                    confirmed += 1
-                else:
-                    pending += 1
-            else:
-                pending += 1
-        
-        print(f"MyBookings -> Total: {total}, Confirmed: {confirmed}, Pending: {pending}")
+        confirmed = sum(1 for b in normalized_bookings if len(b) > 6 and b[6] == 'confirmed')
+        pending = total - confirmed
         
         return render_template(
             "mybookings.html",
             bookings=normalized_bookings,
             total_bookings=total,
             confirmed_count=confirmed,
-            pending_count=pending
+            pending_count=pending,
+            status_exists=status_exists   # Pass this flag
         )
     
     except Exception as e:
