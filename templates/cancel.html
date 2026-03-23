@@ -2,37 +2,166 @@
 <html>
 
 <head>
-<title>Cancel Booking</title>
+<title>Cancel Booking - Sports Center</title>
 <link rel="stylesheet" href="/static/style.css">
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        padding: 20px;
+    }
+    
+    .cancel-container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        animation: slideUp 0.5s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .cancel-container h2 {
+        color: #dc3545;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    .booking-details {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+    }
+    
+    .booking-details p {
+        margin: 10px 0;
+        font-size: 16px;
+    }
+    
+    .booking-details strong {
+        color: #555;
+        display: inline-block;
+        width: 80px;
+    }
+    
+    .warning {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+        color: #856404;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    
+    .cancel-btn {
+        background: #dc3545;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s;
+    }
+    
+    .cancel-btn:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+    
+    .back-btn {
+        background: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .back-btn:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+</style>
 </head>
 
 <body>
-
-<h2>Cancel Booking</h2>
-
-{% if booking %}
-<p><strong>Name:</strong> {{ booking[1] }}</p>
-<p><strong>Sport:</strong> {{ booking[2] }}</p>
-<p><strong>Turf:</strong> {{ booking[3] }}</p>
-<p><strong>Time:</strong> {{ booking[4] }}</p>
-<p><strong>Date:</strong> {{ booking[5] }}</p>
-
-<!-- ================= CANCEL CONFIRM BUTTON ================= -->
-<form action="/confirmcancel/{{ booking[0] }}" method="POST" style="display: inline;">
-    <button type="submit" class="cancelbtn">Confirm Cancel</button>
-</form>
-<!-- ========================================================= -->
-
-{% else %}
-<p>Booking not found.</p>
-{% endif %}
-
-<br><br>
-
-<a href="/">
-<button>Go Back</button>
-</a>
-
+    <div class="cancel-container">
+        <h2>Cancel Booking</h2>
+        
+        {% if booking %}
+        <div class="booking-details">
+            <p><strong>Name:</strong> {{ booking[1] }}</p>
+            <p><strong>Sport:</strong> {{ booking[2] }}</p>
+            <p><strong>Turf:</strong> {{ booking[3] }}</p>
+            <p><strong>Time:</strong> {{ booking[4] }}</p>
+            <p><strong>Date:</strong> {{ booking[5] }}</p>
+        </div>
+        
+        <div class="warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Warning:</strong> This action cannot be undone. The slot will become available for others to book.
+        </div>
+        
+        <div class="button-group">
+            <form action="/confirmcancel/{{ booking[0] }}" method="POST" style="display: inline;">
+                <button type="submit" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                    Yes, Cancel Booking
+                </button>
+            </form>
+            
+            <a href="/" class="back-btn">
+                No, Go Back
+            </a>
+        </div>
+        
+        {% else %}
+        <div class="warning">
+            <p>Booking not found. It may have been already cancelled.</p>
+        </div>
+        <div class="button-group">
+            <a href="/" class="back-btn">Back to Home</a>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Add confirmation dialog
+        document.querySelector('.cancel-btn')?.addEventListener('click', function(e) {
+            if (!confirm('Are you sure you want to cancel this booking? This action cannot be undone.')) {
+                e.preventDefault();
+            }
+        });
+    </script>
 </body>
-
 </html>
