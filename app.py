@@ -439,7 +439,7 @@ def cancelpage(id):
 
         # Only confirmed bookings can be cancelled by users
         if len(booking) > 6 and booking[6] != 'confirmed':
-            flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+            flash('Confirmed bookings can be cancelled by contacting the admin.Please contact admin', 'error')
             return redirect('/mybookings')
 
         return render_template("cancel.html", booking=booking)
