@@ -225,10 +225,16 @@ def admin_panel():
         status_exists = cursor.fetchone()
         
         if not status_exists:
-            cursor.close()
-            db.close()
-            flash('Admin panel requires status column. Please add status column to bookings table.', 'error')
-            return redirect('/')
+            # Add status column automatically
+            try:
+                cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
+                db.commit()
+                flash('Status column added successfully!', 'success')
+            except Exception as e:
+                flash(f'Error adding status column: {str(e)}', 'error')
+                cursor.close()
+                db.close()
+                return redirect('/')
         
         # Get pending bookings
         cursor.execute("""
@@ -328,7 +334,44 @@ def reject_booking(id):
         flash(f'Error rejecting booking: {str(e)}', 'error')
         return redirect('/admin')
 
-# --- CANCEL ROUTES (FIXED) ---
+# --- ADMIN CANCEL BOOKING ROUTE ---
+@app.route('/admin/cancel_booking/<int:id>')
+@login_required
+def admin_cancel_booking(id):
+    """Admin route to cancel confirmed bookings"""
+    try:
+        db = get_db_connection()
+        if db is None:
+            flash("Database connection failed", "error")
+            return redirect('/admin')
+        
+        cursor = db.cursor()
+        
+        # Check if the booking exists and is confirmed
+        cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='confirmed'", (id,))
+        booking = cursor.fetchone()
+        
+        if not booking:
+            flash('Booking not found or already cancelled', 'error')
+            return redirect('/admin')
+        
+        # Delete the confirmed booking
+        cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
+        db.commit()
+        
+        flash(f'Booking cancelled successfully for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
+        
+        cursor.close()
+        db.close()
+        
+        return redirect('/admin')
+    
+    except Exception as e:
+        print(f"Error in admin_cancel_booking: {e}")
+        flash(f'Error cancelling booking: {str(e)}', 'error')
+        return redirect('/admin')
+
+# --- CANCEL ROUTES ---
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
     try:
@@ -356,9 +399,8 @@ def cancelpage(id):
         # If status column exists, only confirmed bookings can be cancelled
         if status_exists:
             if len(booking) > 6 and booking[6] != 'confirmed':
-                flash('Confirmed Bookings, unfortuantely cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
+                flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
                 return redirect('/')
-        # If no status column, all bookings can be cancelled
 
         return render_template("cancel.html", booking=booking)
     
@@ -395,7 +437,7 @@ def confirmcancel(id):
             if len(booking) > 6 and booking[6] != 'confirmed':
                 cursor.close()
                 db.close()
-                flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+                flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
                 return redirect('/')
         
         # Delete the booking
@@ -417,48 +459,6 @@ def confirmcancel(id):
         print(f"Error in confirmcancel route: {e}")
         flash(f'An error occurred while cancelling: {str(e)}', 'error')
         return redirect('/')
-
-# --- DEBUG ROUTE TO CHECK DATABASE STRUCTURE ---
-@app.route('/debug/db')
-def debug_db():
-    """Debug route to check database structure"""
-    try:
-        db = get_db_connection()
-        if db is None:
-            return "Database connection failed", 500
-        
-        cursor = db.cursor()
-        
-        # Check table structure
-        cursor.execute("DESCRIBE bookings")
-        columns = cursor.fetchall()
-        
-        # Get sample data
-        cursor.execute("SELECT * FROM bookings LIMIT 5")
-        sample_data = cursor.fetchall()
-        
-        cursor.close()
-        db.close()
-        
-        return f"""
-        <h2>Database Structure</h2>
-        <h3>Columns:</h3>
-        <pre>{columns}</pre>
-        
-        <h3>Sample Data (first 5 rows):</h3>
-        <pre>{sample_data}</pre>
-        
-        <h3>Column Count:</h3>
-        <p>Number of columns: {len(columns)}</p>
-        
-        <h3>Status Column Present:</h3>
-        <p>{'status' in [col[0] for col in columns]}</p>
-        
-        <br>
-        <a href="/">Back to Home</a>
-        """
-    except Exception as e:
-        return f"Error: {str(e)}"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
