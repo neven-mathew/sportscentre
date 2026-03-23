@@ -95,7 +95,6 @@ def booking():
             try:
                 cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
                 db.commit()
-                # Set existing bookings to pending for admin review
                 cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
                 db.commit()
             except Exception as e:
@@ -204,7 +203,7 @@ def book():
         print(f"Error in book route: {e}")
         return f"An error occurred while booking: {str(e)}", 500
 
-# --- MY BOOKINGS ROUTE ---
+# --- MY BOOKINGS ROUTE (UPDATED) ---
 @app.route('/mybookings')
 def mybookings():
     """View user's own bookings"""
@@ -233,6 +232,12 @@ def mybookings():
         cursor.close()
         db.close()
         
+        # Debug: Print each booking's status to console
+        print("=== BOOKING STATUS DEBUG ===")
+        for booking in all_bookings:
+            status = booking[6] if len(booking) > 6 else "NO STATUS"
+            print(f"ID: {booking[0]}, Name: {booking[1]}, Status: {status}")
+        
         # Calculate statistics
         total = len(all_bookings)
         confirmed = 0
@@ -244,6 +249,17 @@ def mybookings():
                     confirmed += 1
                 elif booking[6] == 'pending':
                     pending += 1
+                else:
+                    # If status is something else, count as pending
+                    if booking[6] is None:
+                        pending += 1
+                    else:
+                        print(f"Unknown status for booking {booking[0]}: {booking[6]}")
+            else:
+                pending += 1
+        
+        print(f"Total: {total}, Confirmed: {confirmed}, Pending: {pending}")
+        print("==========================")
         
         return render_template(
             "mybookings.html",
@@ -439,7 +455,7 @@ def cancelpage(id):
 
         # Only confirmed bookings can be cancelled by users
         if len(booking) > 6 and booking[6] != 'confirmed':
-            flash('Confirmed bookings can be cancelled by contacting the admin.Please contact admin', 'error')
+            flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
             return redirect('/mybookings')
 
         return render_template("cancel.html", booking=booking)
@@ -532,14 +548,14 @@ def debug_status():
         <body>
             <div class="container">
                 <h1>Booking Status Debug</h1>
-                 <table>
+                <table>
                     <thead>
-                         <tr>
+                        <tr>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Status Value</th>
                             <th>Status Type</th>
-                        </tr>
+                        </thead>
                     </thead>
                     <tbody>
         """
@@ -563,7 +579,7 @@ def debug_status():
                 status_display = f"❌ {status}"
             
             html += f"""
-                        <tr>
+                        2
                             <td>#{booking[0]}</td>
                             <td>{booking[1]}</td>
                             <td class="{status_class}">{booking[2]}</td>
@@ -573,7 +589,7 @@ def debug_status():
         
         html += """
                     </tbody>
-                 </table>
+                </table>
                 <br>
                 <a href="/fix-database" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Fix Database</a>
                 <a href="/mybookings" style="background: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-left: 10px;">Back to My Bookings</a>
@@ -677,9 +693,9 @@ def fix_database():
                 </div>
                 
                 <h2>Current Bookings with Status:</h2>
-                 <table>
+                <table>
                     <thead>
-                         <tr>
+                        2
                             <th>ID</th>
                             <th>Name</th>
                             <th>Status</th>
@@ -701,7 +717,7 @@ def fix_database():
         
         html += """
                     </tbody>
-                 </table>
+                </table>
                 <br>
                 <p><strong>Note:</strong> All bookings are now set to 'pending'. Use the admin panel to confirm bookings.</p>
                 <a href="/admin" class="btn" style="background: #2196F3;">Go to Admin Panel</a>
