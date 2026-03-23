@@ -123,6 +123,14 @@
             border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #27ae60;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
         }
 
         .slots-grid {
@@ -139,6 +147,7 @@
         .slot-option input[type="radio"] {
             position: absolute;
             opacity: 0;
+            cursor: pointer;
         }
 
         .slot-label {
@@ -152,12 +161,18 @@
             cursor: pointer;
             transition: all 0.3s;
             font-size: 14px;
+            font-weight: 500;
         }
 
         .slot-option input[type="radio"]:checked + .slot-label {
             background: #27ae60;
             border-color: #27ae60;
             color: white;
+        }
+
+        .slot-option:hover .slot-label {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .booked-slot {
@@ -169,6 +184,11 @@
             padding: 12px;
             border-radius: 8px;
             font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .submit-btn {
@@ -181,16 +201,27 @@
             font-weight: bold;
             cursor: pointer;
             width: 100%;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
         }
 
         .date-selector {
-            background: white;
+            background: #f9f9f9;
             padding: 20px;
             border-radius: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             display: flex;
             gap: 15px;
             align-items: flex-end;
+        }
+
+        .date-selector .form-group {
+            margin-bottom: 0;
+            flex: 1;
         }
 
         .view-slots-btn {
@@ -200,6 +231,22 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .view-slots-btn:hover {
+            background: #219653;
+            transform: translateY(-1px);
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #333;
+            margin: 30px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #27ae60;
+            display: inline-block;
         }
 
         .alert {
@@ -237,16 +284,28 @@
         }
 
         @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
             .navbar {
                 padding: 15px 20px;
             }
             
+            .logo {
+                font-size: 24px;
+            }
+            
             .nav-links a span {
                 display: none;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .slots-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            
+            .date-selector {
+                flex-direction: column;
             }
         }
     </style>
@@ -266,12 +325,53 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
+                <div class="alert alert-{{ category }}">
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
     <div class="booking-container">
+        <!-- Date Selector -->
+        <div class="date-selector">
+            <form method="GET" style="display: flex; gap: 15px; width: 100%; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 2;">
+                    <label><i class="fa-regular fa-calendar"></i> Select Date to View Available Slots</label>
+                    <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" style="width: 100%;">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>&nbsp;</label>
+                    <button type="submit" class="view-slots-btn">
+                        <i class="fa-solid fa-eye"></i> View Slots
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Available Slots Display -->
+        <div style="margin-bottom: 30px;">
+            <h2 class="section-title">Available Slots for {{ date }}</h2>
+            <div class="slots-grid">
+                {% for s in slots %}
+                    {% if s in booked %}
+                        <div class="booked-slot">
+                            <i class="fa-solid fa-lock"></i> {{ s }}
+                        </div>
+                    {% else %}
+                        <div class="slot-option">
+                            <input type="radio" name="slot_preview" value="{{ s }}" id="slot_{{ loop.index }}" disabled>
+                            <label for="slot_{{ loop.index }}" class="slot-label" style="background: #28a745; color: white; border-color: #28a745;">
+                                <i class="fa-solid fa-clock"></i> {{ s }}
+                            </label>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Booking Form -->
         <div class="booking-form-wrapper">
             <div class="form-header">
                 <h2>Book Your Slot</h2>
@@ -288,7 +388,7 @@
                         
                         <div class="form-group">
                             <label><i class="fa-regular fa-calendar"></i> Select Date</label>
-                            <input type="date" name="date" min="{{ today_date }}" required>
+                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
                         </div>
                     </div>
                     
@@ -299,4 +399,57 @@
                                 <option value="">Choose a sport</option>
                                 <option value="Football">⚽ Football (7'S, 5'S)</option>
                                 <option value="Cricket">🏏 Cricket (9A)</option>
-                            </
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
+                            <select name="turf" required>
+                                <option value="">Choose turf</option>
+                                <option value="A1">Turf A1</option>
+                                <option value="A2">Turf A2</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label><i class="fa-regular fa-clock"></i> Select Time Slot</label>
+                        <div class="slots-grid">
+                            {% for s in slots %}
+                                {% if s in booked %}
+                                    <div class="booked-slot">
+                                        <i class="fa-solid fa-lock"></i> {{ s }}
+                                    </div>
+                                {% else %}
+                                    <div class="slot-option">
+                                        <input type="radio" name="slot" value="{{ s }}" id="slot_form_{{ loop.index }}" required>
+                                        <label for="slot_form_{{ loop.index }}" class="slot-label">
+                                            <i class="fa-solid fa-clock"></i> {{ s }}
+                                        </label>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        <i class="fa-solid fa-check-circle"></i> Confirm Booking
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.5s';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
