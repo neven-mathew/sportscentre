@@ -387,21 +387,21 @@
                         <td>{{ booking[3] }}</td>
                         <td>{{ booking[4] }}</td>
                         <td>{{ booking[5] }}</td>
-                        <td>
-                            {% if booking[6] == 'confirmed' %}
-                                <span class="badge badge-confirmed">
-                                    <i class="fas fa-check-circle"></i> Confirmed
-                                </span>
-                            {% elif booking[6] == 'pending' %}
-                                <span class="badge badge-pending">
-                                    <i class="fas fa-clock"></i> Pending Approval
-                                </span>
-                            {% else %}
-                                <span class="badge badge-pending">
-                                    <i class="fas fa-question-circle"></i> Pending
-                                </span>
-                            {% endif %}
-                        </td>
+         <td>
+    {% if booking[6] == 'confirmed' %}
+        <span class="badge badge-confirmed">
+            <i class="fas fa-check-circle"></i> Confirmed
+        </span>
+    {% elif booking[6] == 'pending' %}
+        <span class="badge badge-pending">
+            <i class="fas fa-clock"></i> Pending Approval
+        </span>
+    {% else %}
+        <span class="badge badge-pending">
+            <i class="fas fa-question-circle"></i> Pending
+        </span>
+    {% endif %}
+</td>
                         <td>
                             {% if booking[6] == 'confirmed' %}
                                 <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
