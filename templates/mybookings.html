@@ -89,6 +89,26 @@
         .header p {
             color: #666;
             font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .refresh-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .refresh-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
         }
 
         .stats {
@@ -101,21 +121,39 @@
         .stat-card {
             background: white;
             border-radius: 15px;
-            padding: 20px;
+            padding: 25px;
             text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
         .stat-card h3 {
             color: #666;
             font-size: 14px;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .stat-number {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
+        }
+
+        .stat-card.total .stat-number {
             color: #27ae60;
+        }
+
+        .stat-card.confirmed .stat-number {
+            color: #28a745;
+        }
+
+        .stat-card.pending .stat-number {
+            color: #ffc107;
         }
 
         .bookings-table-wrapper {
@@ -151,25 +189,22 @@
 
         .badge {
             display: inline-block;
-            padding: 4px 12px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
         }
 
-        .badge-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
         .badge-confirmed {
             background: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .badge-cancelled {
-            background: #f8d7da;
-            color: #721c24;
+        .badge-pending {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
 
         .cancel-btn {
@@ -196,24 +231,6 @@
             background: #6c757d;
             cursor: not-allowed;
             pointer-events: none;
-        }
-
-        .refresh-btn {
-            background: #27ae60;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 20px;
-            transition: all 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: #219653;
-            transform: translateY(-2px);
         }
 
         .empty-state {
@@ -349,37 +366,23 @@
             </a>
         </div>
 
-        {% if bookings %}
-        {% set confirmed_count = 0 %}
-        {% set pending_count = 0 %}
-        {% for booking in bookings %}
-            {% if status_exists and booking|length > 6 %}
-                {% if booking[6] == 'confirmed' %}
-                    {% set confirmed_count = confirmed_count + 1 %}
-                {% else %}
-                    {% set pending_count = pending_count + 1 %}
-                {% endif %}
-            {% else %}
-                {% set confirmed_count = confirmed_count + 1 %}
-            {% endif %}
-        {% endfor %}
-        
+        <!-- Statistics Cards -->
         <div class="stats">
-            <div class="stat-card">
+            <div class="stat-card total">
                 <h3>Total Bookings</h3>
-                <div class="stat-number">{{ bookings|length }}</div>
+                <div class="stat-number">{{ total_bookings }}</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card confirmed">
                 <h3>Confirmed</h3>
-                <div class="stat-number" style="color: #28a745;">{{ confirmed_count }}</div>
+                <div class="stat-number">{{ confirmed_count }}</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card pending">
                 <h3>Pending</h3>
-                <div class="stat-number" style="color: #ffc107;">{{ pending_count }}</div>
+                <div class="stat-number">{{ pending_count }}</div>
             </div>
         </div>
-        {% endif %}
 
+        <!-- Bookings Table -->
         <div class="bookings-table-wrapper">
             {% if bookings %}
             <table class="booking-table">
@@ -405,7 +408,7 @@
                         <td>{{ booking[4] }}</td>
                         <td>{{ booking[5] }}</td>
                         <td>
-                            {% if status_exists and booking|length > 6 %}
+                            {% if booking|length > 6 %}
                                 {% if booking[6] == 'confirmed' %}
                                     <span class="badge badge-confirmed">
                                         <i class="fas fa-check-circle"></i> Confirmed
@@ -415,8 +418,8 @@
                                         <i class="fas fa-clock"></i> Pending Approval
                                     </span>
                                 {% else %}
-                                    <span class="badge badge-cancelled">
-                                        <i class="fas fa-times-circle"></i> {{ booking[6] }}
+                                    <span class="badge badge-pending">
+                                        <i class="fas fa-question-circle"></i> {{ booking[6] }}
                                     </span>
                                 {% endif %}
                             {% else %}
@@ -426,7 +429,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if status_exists and booking|length > 6 %}
+                            {% if booking|length > 6 %}
                                 {% if booking[6] == 'confirmed' %}
                                     <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
                                         <i class="fas fa-trash"></i> Cancel Booking
@@ -469,11 +472,6 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
-        
-        // Auto-refresh page every 30 seconds to check for status updates
-        setTimeout(function() {
-            location.reload();
-        }, 30000);
     </script>
 </body>
 </html>
