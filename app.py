@@ -232,18 +232,36 @@ def mybookings():
         cursor.close()
         db.close()
         
-        # Debug: Print each booking's status to console
+        # Debug: print each booking's status with index info
         print("=== BOOKING STATUS DEBUG ===")
+        for i, booking in enumerate(all_bookings):
+            print(f"Booking {i+1}: ID={booking[0]}, Name={booking[1]}, Tuple length={len(booking)}")
+            if len(booking) > 6:
+                raw_status = booking[6]
+                # Normalize to lowercase for comparison
+                normalized_status = raw_status.lower() if raw_status else ''
+                print(f"  Raw status = '{raw_status}', Normalized = '{normalized_status}'")
+            else:
+                print("  No status column found")
+        print("==========================")
+        
+        # Normalize status values to lowercase for consistent processing
+        normalized_bookings = []
         for booking in all_bookings:
-            status = booking[6] if len(booking) > 6 else "NO STATUS"
-            print(f"ID: {booking[0]}, Name: {booking[1]}, Status: {status}")
+            if len(booking) > 6 and booking[6]:
+                # Convert to lowercase and store in a list of tuples (replace the status)
+                booking_list = list(booking)
+                booking_list[6] = booking[6].lower()
+                normalized_bookings.append(tuple(booking_list))
+            else:
+                normalized_bookings.append(booking)
         
         # Calculate statistics
-        total = len(all_bookings)
+        total = len(normalized_bookings)
         confirmed = 0
         pending = 0
         
-        for booking in all_bookings:
+        for booking in normalized_bookings:
             if len(booking) > 6:
                 if booking[6] == 'confirmed':
                     confirmed += 1
@@ -251,19 +269,15 @@ def mybookings():
                     pending += 1
                 else:
                     # If status is something else, count as pending
-                    if booking[6] is None:
-                        pending += 1
-                    else:
-                        print(f"Unknown status for booking {booking[0]}: {booking[6]}")
+                    pending += 1
             else:
                 pending += 1
         
-        print(f"Total: {total}, Confirmed: {confirmed}, Pending: {pending}")
-        print("==========================")
+        print(f"Statistics: Total={total}, Confirmed={confirmed}, Pending={pending}")
         
         return render_template(
             "mybookings.html",
-            bookings=all_bookings,
+            bookings=normalized_bookings,
             total_bookings=total,
             confirmed_count=confirmed,
             pending_count=pending
@@ -272,7 +286,6 @@ def mybookings():
     except Exception as e:
         print(f"Error in mybookings route: {e}")
         return f"An error occurred: {str(e)}", 500
-
 # --- ADMIN PANEL ROUTES ---
 @app.route('/admin')
 @login_required
