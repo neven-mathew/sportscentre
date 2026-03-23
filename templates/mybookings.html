@@ -18,7 +18,6 @@
             min-height: 100vh;
         }
 
-        /* Navigation Bar (same as admin panel) */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -66,14 +65,12 @@
             border-radius: 6px;
         }
 
-        /* Main Container */
         .container {
             max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
         }
 
-        /* Header (same style as admin panel's section header) */
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 15px;
@@ -117,7 +114,6 @@
             transform: translateY(-2px);
         }
 
-        /* Statistics Cards (matching admin panel) */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -159,7 +155,6 @@
             opacity: 0.3;
         }
 
-        /* Table Styles (same as admin panel) */
         .bookings-table-wrapper {
             background: white;
             border-radius: 15px;
@@ -191,7 +186,6 @@
             background: #f8f9fa;
         }
 
-        /* Badges (same as admin panel) */
         .badge {
             display: inline-block;
             padding: 5px 12px;
@@ -212,7 +206,6 @@
             border: 1px solid #ffeeba;
         }
 
-        /* Action Buttons */
         .cancel-btn {
             background: #dc3545;
             color: white;
@@ -244,7 +237,6 @@
             opacity: 0.8;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -257,7 +249,6 @@
             opacity: 0.5;
         }
 
-        /* Alerts */
         .alert {
             position: fixed;
             top: 20px;
@@ -292,7 +283,6 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .navbar {
                 padding: 15px 20px;
@@ -380,7 +370,7 @@
             {% if bookings %}
             <table class="booking-table">
                 <thead>
-                    <tr>
+                    <table>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Sport</th>
@@ -389,11 +379,11 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </tr>
+                    </thead>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
-                    <tr>
+                    应用
                         <td>#{{ booking[0] }}</td>
                         <td><strong>{{ booking[1] }}</strong></td>
                         <td>{{ booking[2] }}</td>
@@ -401,22 +391,20 @@
                         <td>{{ booking[4] }}</td>
                         <td>{{ booking[5] }}</td>
                         <td>
-                            {% if booking[6] == 'confirmed' %}
+                            {# Normalized status is already lowercase, but check both for safety #}
+                            {% set status = booking[6]|lower %}
+                            {% if status == 'confirmed' %}
                                 <span class="badge badge-confirmed">
                                     <i class="fas fa-check-circle"></i> Confirmed
                                 </span>
-                            {% elif booking[6] == 'pending' %}
+                            {% else %}
                                 <span class="badge badge-pending">
                                     <i class="fas fa-clock"></i> Pending Approval
                                 </span>
-                            {% else %}
-                                <span class="badge badge-pending">
-                                    <i class="fas fa-question-circle"></i> Pending
-                                </span>
                             {% endif %}
-                        </td>
+                         </td>
                         <td>
-                            {% if booking[6] == 'confirmed' %}
+                            {% if status == 'confirmed' %}
                                 <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
                                     <i class="fas fa-trash"></i> Cancel
                                 </a>
@@ -425,7 +413,7 @@
                                     <i class="fas fa-hourglass-half"></i> Awaiting
                                 </span>
                             {% endif %}
-                        </td>
+                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
