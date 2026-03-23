@@ -6,7 +6,7 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')  # Required for sessions
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
 
 # Database configuration
 DB_CONFIG = {
@@ -17,9 +17,9 @@ DB_CONFIG = {
     'port': 37887
 }
 
-# Admin credentials (in production, store these in database with hashed passwords)
+# Admin credentials
 ADMIN_USERNAME = 'admin'
-ADMIN_PASSWORD = 'admin123'  # Change this to a secure password
+ADMIN_PASSWORD = 'admin123'
 
 def get_db_connection():
     """Create database connection with error handling"""
@@ -64,7 +64,7 @@ def logout():
     flash('You have been logged out', 'info')
     return redirect('/login')
 
-# --- INDEX ROUTE (Updated with flash messages) ---
+# --- INDEX ROUTE ---
 @app.route('/', methods=['GET'])
 def index():
     try:
@@ -74,8 +74,17 @@ def index():
         
         cursor = db.cursor()
 
-        # Get all confirmed bookings only for display
-        cursor.execute("SELECT * FROM bookings WHERE status='confirmed' ORDER BY booking_date DESC, slot_time")
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
+        
+        if status_exists:
+            # Get only confirmed bookings
+            cursor.execute("SELECT * FROM bookings WHERE status='confirmed' ORDER BY booking_date DESC, slot_time")
+        else:
+            # Get all bookings if status column doesn't exist
+            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time")
+        
         all_bookings = cursor.fetchall()
 
         # Get selected date
@@ -84,11 +93,17 @@ def index():
         if not selected_date:
             selected_date = d.today().strftime("%Y-%m-%d")
 
-        # Get booked slots (only confirmed ones)
-        cursor.execute(
-            "SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'",
-            (selected_date,)
-        )
+        # Get booked slots
+        if status_exists:
+            cursor.execute(
+                "SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'",
+                (selected_date,)
+            )
+        else:
+            cursor.execute(
+                "SELECT slot_time FROM bookings WHERE booking_date=%s",
+                (selected_date,)
+            )
         booked = [row[0] for row in cursor.fetchall()]
 
         # Get today's date for min attribute
@@ -119,7 +134,7 @@ def index():
         print(f"Error in index route: {e}")
         return f"An error occurred: {str(e)}", 500
 
-# --- BOOK ROUTE (Updated to set status as pending) ---
+# --- BOOK ROUTE ---
 @app.route('/book', methods=['POST'])
 def book():
     try:
@@ -146,44 +161,48 @@ def book():
         if selected_date < today:
             return "Cannot book for past dates! Please select today or a future date.", 400
 
-        # Check if slot already confirmed
-        cursor.execute("""
-            SELECT * FROM bookings
-            WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='confirmed'
-        """, (turf, slot, booking_date))
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
 
-        existing_confirmed = cursor.fetchone()
+        # Check if slot already booked and confirmed
+        if status_exists:
+            cursor.execute("""
+                SELECT * FROM bookings
+                WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='confirmed'
+            """, (turf, slot, booking_date))
+        else:
+            cursor.execute("""
+                SELECT * FROM bookings
+                WHERE turf=%s AND slot_time=%s AND booking_date=%s
+            """, (turf, slot, booking_date))
 
-        if existing_confirmed:
+        existing = cursor.fetchone()
+
+        if existing:
             cursor.close()
             db.close()
-            return "Slot already booked and confirmed for this turf!"
+            return "Slot already booked for this turf!"
 
-        # Check if there's already a pending booking for this slot
-        cursor.execute("""
-            SELECT * FROM bookings
-            WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='pending'
-        """, (turf, slot, booking_date))
-        
-        existing_pending = cursor.fetchone()
-        
-        if existing_pending:
-            cursor.close()
-            db.close()
-            return "There's already a pending booking for this slot. Please wait for admin confirmation or choose another slot."
-
-        # Insert booking with pending status
-        cursor.execute("""
-            INSERT INTO bookings (name, sport, turf, slot_time, booking_date, status)
-            VALUES (%s, %s, %s, %s, %s, 'pending')
-        """, (name, sport, turf, slot, booking_date))
+        # Insert booking
+        if status_exists:
+            cursor.execute("""
+                INSERT INTO bookings (name, sport, turf, slot_time, booking_date, status)
+                VALUES (%s, %s, %s, %s, %s, 'pending')
+            """, (name, sport, turf, slot, booking_date))
+            flash('Booking request submitted successfully! Waiting for admin confirmation.', 'success')
+        else:
+            cursor.execute("""
+                INSERT INTO bookings (name, sport, turf, slot_time, booking_date)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (name, sport, turf, slot, booking_date))
+            flash('Booking confirmed successfully!', 'success')
 
         db.commit()
         
         cursor.close()
         db.close()
         
-        flash('Booking request submitted successfully! Waiting for admin confirmation.', 'success')
         return redirect('/')
     
     except Exception as e:
@@ -201,7 +220,17 @@ def admin_panel():
         
         cursor = db.cursor()
         
-        # Get all bookings with pending status
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
+        
+        if not status_exists:
+            cursor.close()
+            db.close()
+            flash('Admin panel requires status column. Please add status column to bookings table.', 'error')
+            return redirect('/')
+        
+        # Get pending bookings
         cursor.execute("""
             SELECT * FROM bookings 
             WHERE status='pending' 
@@ -209,7 +238,7 @@ def admin_panel():
         """)
         pending_bookings = cursor.fetchall()
         
-        # Get all confirmed bookings
+        # Get confirmed bookings
         cursor.execute("""
             SELECT * FROM bookings 
             WHERE status='confirmed' 
@@ -299,7 +328,7 @@ def reject_booking(id):
         flash(f'Error rejecting booking: {str(e)}', 'error')
         return redirect('/admin')
 
-# --- CANCEL ROUTES (Updated to check status) ---
+# --- CANCEL ROUTES (FIXED) ---
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
     try:
@@ -308,6 +337,12 @@ def cancelpage(id):
             return "Database connection failed", 500
         
         cursor = db.cursor()
+        
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
+        
+        # Get booking details
         cursor.execute("SELECT * FROM bookings WHERE id=%s", (id,))
         booking = cursor.fetchone()
         
@@ -315,17 +350,22 @@ def cancelpage(id):
         db.close()
 
         if not booking:
-            return "Booking not found", 404
+            flash('Booking not found', 'error')
+            return redirect('/')
 
-        # Only confirmed bookings can be cancelled by users
-        if booking[6] != 'confirmed':
-            return "Only confirmed bookings can be cancelled", 400
+        # If status column exists, only confirmed bookings can be cancelled
+        if status_exists:
+            if len(booking) > 6 and booking[6] != 'confirmed':
+                flash('Only confirmed bookings can be cancelled. Please contact admin for pending bookings.', 'error')
+                return redirect('/')
+        # If no status column, all bookings can be cancelled
 
         return render_template("cancel.html", booking=booking)
     
     except Exception as e:
         print(f"Error in cancelpage route: {e}")
-        return f"An error occurred: {str(e)}", 500
+        flash(f'An error occurred: {str(e)}', 'error')
+        return redirect('/')
 
 @app.route('/confirmcancel/<int:id>', methods=['POST'])
 def confirmcancel(id):
@@ -336,20 +376,29 @@ def confirmcancel(id):
         
         cursor = db.cursor()
         
-        # Check if booking is confirmed before deleting
-        cursor.execute("SELECT status FROM bookings WHERE id=%s", (id,))
-        result = cursor.fetchone()
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
         
-        if not result:
+        # Get booking details
+        cursor.execute("SELECT * FROM bookings WHERE id=%s", (id,))
+        booking = cursor.fetchone()
+        
+        if not booking:
             cursor.close()
             db.close()
-            return "Booking not found", 404
-            
-        if result[0] != 'confirmed':
-            cursor.close()
-            db.close()
-            return "Only confirmed bookings can be cancelled", 400
+            flash('Booking not found', 'error')
+            return redirect('/')
         
+        # If status column exists, verify booking is confirmed before deletion
+        if status_exists:
+            if len(booking) > 6 and booking[6] != 'confirmed':
+                cursor.close()
+                db.close()
+                flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+                return redirect('/')
+        
+        # Delete the booking
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
         
@@ -358,14 +407,58 @@ def confirmcancel(id):
         db.close()
         
         if affected_rows == 0:
-            return "Booking not found", 404
+            flash('Booking not found', 'error')
+        else:
+            flash('Booking cancelled successfully!', 'success')
             
-        flash('Booking cancelled successfully', 'success')
         return redirect('/')
     
     except Exception as e:
         print(f"Error in confirmcancel route: {e}")
-        return f"An error occurred while cancelling: {str(e)}", 500
+        flash(f'An error occurred while cancelling: {str(e)}', 'error')
+        return redirect('/')
+
+# --- DEBUG ROUTE TO CHECK DATABASE STRUCTURE ---
+@app.route('/debug/db')
+def debug_db():
+    """Debug route to check database structure"""
+    try:
+        db = get_db_connection()
+        if db is None:
+            return "Database connection failed", 500
+        
+        cursor = db.cursor()
+        
+        # Check table structure
+        cursor.execute("DESCRIBE bookings")
+        columns = cursor.fetchall()
+        
+        # Get sample data
+        cursor.execute("SELECT * FROM bookings LIMIT 5")
+        sample_data = cursor.fetchall()
+        
+        cursor.close()
+        db.close()
+        
+        return f"""
+        <h2>Database Structure</h2>
+        <h3>Columns:</h3>
+        <pre>{columns}</pre>
+        
+        <h3>Sample Data (first 5 rows):</h3>
+        <pre>{sample_data}</pre>
+        
+        <h3>Column Count:</h3>
+        <p>Number of columns: {len(columns)}</p>
+        
+        <h3>Status Column Present:</h3>
+        <p>{'status' in [col[0] for col in columns]}</p>
+        
+        <br>
+        <a href="/">Back to Home</a>
+        """
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
