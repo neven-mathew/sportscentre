@@ -477,7 +477,7 @@ def confirmcancel(id):
         if len(booking) > 6 and booking[6] != 'confirmed':
             cursor.close()
             db.close()
-            flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+            flash('Cancelations for confirmed bookings can be done by contacing admin office. Please contact admin office.', 'error')
             return redirect('/mybookings')
         
         # Delete the booking
