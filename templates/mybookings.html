@@ -319,7 +319,7 @@
             {% if bookings %}
             <table class="booking-table">
                 <thead>
-                    <tr>
+                    2
                         <th>ID</th>
                         <th>Name</th>
                         <th>Sport</th>
@@ -328,12 +328,12 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </tr>
+                    </thead>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
-                    <tr>
-                        <td>#{{ booking[0] }}</td>
+                    2
+                        <td style="text-align: center;">#{{ booking[0] }}</td>
                         <td><strong>{{ booking[1] }}</strong></td>
                         <td>{{ booking[2] }}</td>
                         <td>{{ booking[3] }}</td>
@@ -361,7 +361,7 @@
                                 </span>
                             {% endif %}
                         </td>
-                    </tr>
+                    2
                     {% endfor %}
                 </tbody>
             </table>
@@ -389,10 +389,10 @@
             });
         }, 5000);
         
-        // Auto-refresh page every 15 seconds to check for status updates
+        // Auto-refresh page every 10 seconds to check for status updates
         let refreshInterval = setInterval(function() {
             location.reload();
-        }, 15000);
+        }, 10000);
         
         // Clear interval on page unload
         window.addEventListener('beforeunload', function() {
