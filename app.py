@@ -62,11 +62,17 @@ def login():
 def logout():
     session.clear()
     flash('You have been logged out', 'info')
-    return redirect('/login')
+    return redirect('/')
 
-# --- INDEX ROUTE ---
-@app.route('/', methods=['GET'])
-def index():
+# --- HOMEPAGE ROUTE ---
+@app.route('/')
+def homepage():
+    """Homepage displaying center information"""
+    return render_template('homepage.html')
+
+# --- BOOKING ROUTE ---
+@app.route('/booking', methods=['GET', 'POST'])
+def booking():
     try:
         db = get_db_connection()
         if db is None:
@@ -77,23 +83,13 @@ def index():
         # Check if status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         status_exists = cursor.fetchone()
-        
-        if status_exists:
-            # Get only confirmed bookings
-            cursor.execute("SELECT * FROM bookings WHERE status='confirmed' ORDER BY booking_date DESC, slot_time")
-        else:
-            # Get all bookings if status column doesn't exist
-            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time")
-        
-        all_bookings = cursor.fetchall()
 
         # Get selected date
         selected_date = request.args.get("date")
-
         if not selected_date:
             selected_date = d.today().strftime("%Y-%m-%d")
 
-        # Get booked slots
+        # Get booked slots for selected date
         if status_exists:
             cursor.execute(
                 "SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'",
@@ -122,8 +118,7 @@ def index():
         db.close()
 
         return render_template(
-            "index.html",
-            bookings=all_bookings,
+            "booking.html",
             slots=slots,
             booked=booked,
             date=selected_date,
@@ -131,10 +126,10 @@ def index():
         )
     
     except Exception as e:
-        print(f"Error in index route: {e}")
+        print(f"Error in booking route: {e}")
         return f"An error occurred: {str(e)}", 500
 
-# --- BOOK ROUTE ---
+# --- BOOK ROUTE (Process booking) ---
 @app.route('/book', methods=['POST'])
 def book():
     try:
@@ -203,11 +198,47 @@ def book():
         cursor.close()
         db.close()
         
-        return redirect('/')
+        return redirect('/mybookings')
     
     except Exception as e:
         print(f"Error in book route: {e}")
         return f"An error occurred while booking: {str(e)}", 500
+
+# --- MY BOOKINGS ROUTE ---
+@app.route('/mybookings')
+def mybookings():
+    """View user's own bookings"""
+    try:
+        db = get_db_connection()
+        if db is None:
+            return "Database connection failed", 500
+        
+        cursor = db.cursor()
+
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
+        
+        # Get all bookings (in a real app, you'd filter by user, but for demo we show all)
+        if status_exists:
+            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
+        else:
+            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
+        
+        all_bookings = cursor.fetchall()
+        
+        cursor.close()
+        db.close()
+
+        return render_template(
+            "mybookings.html",
+            bookings=all_bookings,
+            status_exists=status_exists
+        )
+    
+    except Exception as e:
+        print(f"Error in mybookings route: {e}")
+        return f"An error occurred: {str(e)}", 500
 
 # --- ADMIN PANEL ROUTES ---
 @app.route('/admin')
@@ -370,6 +401,7 @@ def admin_cancel_booking(id):
         print(f"Error in admin_cancel_booking: {e}")
         flash(f'Error cancelling booking: {str(e)}', 'error')
         return redirect('/admin')
+
 # --- CANCEL ROUTES ---
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
@@ -393,20 +425,20 @@ def cancelpage(id):
 
         if not booking:
             flash('Booking not found', 'error')
-            return redirect('/')
+            return redirect('/mybookings')
 
         # If status column exists, only confirmed bookings can be cancelled
         if status_exists:
             if len(booking) > 6 and booking[6] != 'confirmed':
                 flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
-                return redirect('/')
+                return redirect('/mybookings')
 
         return render_template("cancel.html", booking=booking)
     
     except Exception as e:
         print(f"Error in cancelpage route: {e}")
         flash(f'An error occurred: {str(e)}', 'error')
-        return redirect('/')
+        return redirect('/mybookings')
 
 @app.route('/confirmcancel/<int:id>', methods=['POST'])
 def confirmcancel(id):
@@ -429,7 +461,7 @@ def confirmcancel(id):
             cursor.close()
             db.close()
             flash('Booking not found', 'error')
-            return redirect('/')
+            return redirect('/mybookings')
         
         # If status column exists, verify booking is confirmed before deletion
         if status_exists:
@@ -437,7 +469,7 @@ def confirmcancel(id):
                 cursor.close()
                 db.close()
                 flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
-                return redirect('/')
+                return redirect('/mybookings')
         
         # Delete the booking
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
@@ -452,12 +484,12 @@ def confirmcancel(id):
         else:
             flash('Booking cancelled successfully!', 'success')
             
-        return redirect('/')
+        return redirect('/mybookings')
     
     except Exception as e:
         print(f"Error in confirmcancel route: {e}")
         flash(f'An error occurred while cancelling: {str(e)}', 'error')
-        return redirect('/')
+        return redirect('/mybookings')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
