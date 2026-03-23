@@ -89,27 +89,8 @@
         .header p {
             color: #666;
             font-size: 16px;
-            margin-bottom: 15px;
         }
 
-        .refresh-btn {
-            background: #27ae60;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: #219653;
-            transform: translateY(-2px);
-        }
-
-        /* Table Styles */
         .bookings-table-wrapper {
             background: white;
             border-radius: 15px;
@@ -141,28 +122,24 @@
             background: #f8f9fa;
         }
 
-        /* Badge Styles */
         .badge {
             display: inline-block;
-            padding: 5px 12px;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
         }
 
-        .badge-confirmed {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
         .badge-pending {
             background: #fff3cd;
             color: #856404;
-            border: 1px solid #ffeeba;
         }
 
-        /* Button Styles */
+        .badge-confirmed {
+            background: #d4edda;
+            color: #155724;
+        }
+
         .cancel-btn {
             background: #dc3545;
             color: white;
@@ -174,8 +151,6 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s;
-            border: none;
-            cursor: pointer;
         }
 
         .cancel-btn:hover {
@@ -222,7 +197,6 @@
             transform: translateY(-2px);
         }
 
-        /* Alert Messages */
         .alert {
             position: fixed;
             top: 20px;
@@ -309,12 +283,8 @@
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> My Bookings</h1>
             <p>View and manage your booked slots</p>
-            <a href="/mybookings" class="refresh-btn">
-                <i class="fas fa-sync-alt"></i> Refresh Status
-            </a>
         </div>
 
-        <!-- Bookings Table -->
         <div class="bookings-table-wrapper">
             {% if bookings %}
             <table class="booking-table">
@@ -340,24 +310,28 @@
                         <td>{{ booking[4] }}</td>
                         <td>{{ booking[5] }}</td>
                         <td>
-                            {% if booking[6] == 'confirmed' %}
-                                <span class="badge badge-confirmed">
-                                    <i class="fas fa-check-circle"></i> Confirmed
-                                </span>
+                            {% if status_exists and booking|length > 6 %}
+                                {% if booking[6] == 'confirmed' %}
+                                    <span class="badge badge-confirmed"><i class="fas fa-check-circle"></i> Confirmed</span>
+                                {% else %}
+                                    <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                                {% endif %}
                             {% else %}
-                                <span class="badge badge-pending">
-                                    <i class="fas fa-clock"></i> Pending Approval
-                                </span>
+                                <span class="badge badge-confirmed"><i class="fas fa-check-circle"></i> Confirmed</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if booking[6] == 'confirmed' %}
-                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
+                            {% if status_exists and booking|length > 6 and booking[6] == 'confirmed' %}
+                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                    <i class="fas fa-trash"></i> Cancel
+                                </a>
+                            {% elif not status_exists %}
+                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
                                     <i class="fas fa-trash"></i> Cancel
                                 </a>
                             {% else %}
-                                <span class="cancel-btn disabled" style="background: #ffc107; color: #856404; cursor: wait;">
-                                    <i class="fas fa-hourglass-half"></i> Awaiting
+                                <span class="cancel-btn disabled" style="background: #6c757d; cursor: not-allowed;">
+                                    <i class="fas fa-clock"></i> Pending
                                 </span>
                             {% endif %}
                         </td>
@@ -369,8 +343,7 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-check"></i>
                 <p>No bookings found</p>
-                <p style="font-size: 14px; margin-top: 10px;">Book your first slot to get started!</p>
-                <a href="/booking" class="btn-book-now" style="margin-top: 20px; display: inline-block;">
+                <a href="/booking" class="btn-book-now">
                     <i class="fas fa-plus-circle"></i> Book Your First Slot
                 </a>
             </div>
@@ -388,16 +361,6 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
-        
-        // Auto-refresh page every 15 seconds to check for status updates
-        let refreshInterval = setInterval(function() {
-            location.reload();
-        }, 15000);
-        
-        // Clear interval on page unload
-        window.addEventListener('beforeunload', function() {
-            clearInterval(refreshInterval);
-        });
     </script>
 </body>
 </html>
