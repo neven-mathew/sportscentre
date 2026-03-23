@@ -295,21 +295,17 @@
             .navbar {
                 padding: 15px 20px;
             }
-            
             .logo {
                 font-size: 24px;
             }
-            
             .nav-links a span {
                 display: none;
             }
-            
             .booking-table th,
             .booking-table td {
                 padding: 10px;
                 font-size: 12px;
             }
-            
             .stats {
                 grid-template-columns: 1fr;
             }
@@ -367,7 +363,7 @@
             {% if bookings %}
             <table class="booking-table">
                 <thead>
-                    <tr>
+                    ：
                         <th>ID</th>
                         <th>Name</th>
                         <th>Sport</th>
@@ -376,7 +372,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </thead>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
@@ -387,21 +383,21 @@
                         <td>{{ booking[3] }}</td>
                         <td>{{ booking[4] }}</td>
                         <td>{{ booking[5] }}</td>
-         <td>
-    {% if booking[6] == 'confirmed' %}
-        <span class="badge badge-confirmed">
-            <i class="fas fa-check-circle"></i> Confirmed
-        </span>
-    {% elif booking[6] == 'pending' %}
-        <span class="badge badge-pending">
-            <i class="fas fa-clock"></i> Pending Approval
-        </span>
-    {% else %}
-        <span class="badge badge-pending">
-            <i class="fas fa-question-circle"></i> Pending
-        </span>
-    {% endif %}
-</td>
+                        <td>
+                            {% if booking[6] == 'confirmed' %}
+                                <span class="badge badge-confirmed">
+                                    <i class="fas fa-check-circle"></i> Confirmed
+                                </span>
+                            {% elif booking[6] == 'pending' %}
+                                <span class="badge badge-pending">
+                                    <i class="fas fa-clock"></i> Pending Approval
+                                </span>
+                            {% else %}
+                                <span class="badge badge-pending">
+                                    <i class="fas fa-question-circle"></i> Pending
+                                </span>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if booking[6] == 'confirmed' %}
                                 <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
@@ -428,6 +424,7 @@
     </div>
 
     <script>
+        // Auto-hide alerts after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
