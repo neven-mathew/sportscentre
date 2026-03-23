@@ -1,11 +1,227 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Sports Centre</title>
-<link rel="stylesheet" href="/static/style.css">
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <style>
+        /* Additional styles for homepage integration */
+        .booking-section {
+            background: #f9f9f9;
+            padding: 60px 20px;
+        }
 
+        .booking-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .booking-form-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 40px;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            color: white;
+            padding: 25px 30px;
+        }
+
+        .form-header h2 {
+            margin: 0;
+            font-size: 28px;
+            border: none;
+            color: white;
+        }
+
+        .form-header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+        }
+
+        .booking-form {
+            padding: 30px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #27ae60;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+        }
+
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .slot-option {
+            position: relative;
+        }
+
+        .slot-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .slot-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .slot-option input[type="radio"]:checked + .slot-label {
+            background: #27ae60;
+            border-color: #27ae60;
+            color: white;
+        }
+
+        .slot-option:hover .slot-label {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .bookings-table-wrapper {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            color: #333;
+            margin: 40px 0 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #27ae60;
+            display: inline-block;
+        }
+
+        .date-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .date-selector .form-group {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .view-slots-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .admin-footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .admin-link {
+            color: #27ae60;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .admin-link:hover {
+            color: #219653;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .slots-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+            
+            .booking-form {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
 <body>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -14,121 +230,390 @@
         {% endif %}
     {% endwith %}
 
-<h1>Sports Centre Booking</h1>
+    <nav class="navbar">
+        <a href="/" class="logo">PlaySpots</a>
+        <div class="nav-right">
+            <a href="#booking-section" class="btn-book">
+                <i class="fa-solid fa-person-running"></i> Book Your Spot
+            </a>
+            <i class="fa-solid fa-bars hamburger"></i>
+        </div>
+    </nav>
 
-<div class="sports">
-<img src="/static/images/football.jpg" class="sportimg" alt="Football">
-<img src="/static/images/volleyball.jpg" class="sportimg" alt="Volleyball">
-</div>
+    <header class="hero">
+        <div class="glass-card">
+            <div class="stadium-circle-logo">
+                <div class="stadium-circle-logo-text">
+                    COCHIN<br>OLYMPIAD
+                    <span>INDOOR STADIUM</span>
+                </div>
+            </div>
+            
+            <h1>Cochin Olympiad Indoor Stadium, Near Assisi School, Tharishu<br>Road End, Njarakkal, Ernakulam</h1>
+            
+            <a href="#booking-section" class="btn-slots">Book Your Slots Now</a>
+        </div>
+    </header>
 
-<form action="/book" method="POST">
+    <section class="features">
+        <h2>Sports Available</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <i class="fa-regular fa-futbol feature-icon"></i>
+                <div class="feature-text">
+                    7'S, 5'S -<br>Football
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fa-solid fa-baseball-bat-ball feature-icon"></i>
+                <div class="feature-text">
+                    9A -<br>Cricket
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fa-solid fa-person-swimming feature-icon"></i>
+                <div class="feature-text">
+                    25, 10 & 5 memberS Pool -<br>Swimming
+                </div>
+            </div>
+        </div>
+    </section>
 
-<input type="text" name="name" placeholder="Your Name" required>
+    <section id="booking-section" class="booking-section">
+        <div class="booking-container">
+            <div class="booking-form-wrapper">
+                <div class="form-header">
+                    <h2>Book Your Slot</h2>
+                    <p>Fill in the details below to reserve your spot</p>
+                </div>
+                
+                <div class="booking-form">
+                    <form action="/book" method="POST">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fa-regular fa-user"></i> Your Name</label>
+                                <input type="text" name="name" placeholder="Enter your full name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fa-regular fa-calendar"></i> Select Date</label>
+                                <input type="date" name="date" min="{{ today_date }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-trophy"></i> Select Sport</label>
+                                <select name="sport" required>
+                                    <option value="">Choose a sport</option>
+                                    <option value="Football">⚽ Football (7'S, 5'S)</option>
+                                    <option value="Cricket">🏏 Cricket (9A)</option>
+                                    <option value="Swimming">🏊 Swimming</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
+                                <select name="turf" required>
+                                    <option value="">Choose turf</option>
+                                    <option value="A1">Turf A1</option>
+                                    <option value="A2">Turf A2</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-clock"></i> Select Time Slot</label>
+                            <div class="slots-grid">
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="06:00 AM" id="slot_0600" required>
+                                    <label for="slot_0600" class="slot-label">6:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="07:00 AM" id="slot_0700">
+                                    <label for="slot_0700" class="slot-label">7:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="08:00 AM" id="slot_0800">
+                                    <label for="slot_0800" class="slot-label">8:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="09:00 AM" id="slot_0900">
+                                    <label for="slot_0900" class="slot-label">9:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="10:00 AM" id="slot_1000">
+                                    <label for="slot_1000" class="slot-label">10:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="11:00 AM" id="slot_1100">
+                                    <label for="slot_1100" class="slot-label">11:00 AM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="12:00 PM" id="slot_1200">
+                                    <label for="slot_1200" class="slot-label">12:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="01:00 PM" id="slot_1300">
+                                    <label for="slot_1300" class="slot-label">1:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="02:00 PM" id="slot_1400">
+                                    <label for="slot_1400" class="slot-label">2:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="03:00 PM" id="slot_1500">
+                                    <label for="slot_1500" class="slot-label">3:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="04:00 PM" id="slot_1600">
+                                    <label for="slot_1600" class="slot-label">4:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="05:00 PM" id="slot_1700">
+                                    <label for="slot_1700" class="slot-label">5:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="06:00 PM" id="slot_1800">
+                                    <label for="slot_1800" class="slot-label">6:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="07:00 PM" id="slot_1900">
+                                    <label for="slot_1900" class="slot-label">7:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="08:00 PM" id="slot_2000">
+                                    <label for="slot_2000" class="slot-label">8:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="09:00 PM" id="slot_2100">
+                                    <label for="slot_2100" class="slot-label">9:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="10:00 PM" id="slot_2200">
+                                    <label for="slot_2200" class="slot-label">10:00 PM</label>
+                                </div>
+                                <div class="slot-option">
+                                    <input type="radio" name="slot" value="11:00 PM" id="slot_2300">
+                                    <label for="slot_2300" class="slot-label">11:00 PM</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">
+                            <i class="fa-solid fa-check-circle"></i> Confirm Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Available Slots Section -->
+            <div class="bookings-table-wrapper">
+                <div style="padding: 30px;">
+                    <h2 class="section-title">Available Slots</h2>
+                    
+                    <div class="date-selector">
+                        <form method="GET" style="display: flex; gap: 15px; width: 100%; flex-wrap: wrap;">
+                            <div class="form-group" style="flex: 2;">
+                                <label><i class="fa-regular fa-calendar"></i> Select Date to View Slots</label>
+                                <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" style="width: 100%;">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="view-slots-btn">
+                                    <i class="fa-solid fa-eye"></i> View Slots
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="slots-grid">
+                        {% for s in slots %}
+                            {% if s in booked %}
+                                <button class="booked" disabled type="button">
+                                    <i class="fa-solid fa-lock"></i> {{ s }}
+                                </button>
+                            {% else %}
+                                <button class="available" type="button">
+                                    <i class="fa-solid fa-clock"></i> {{ s }}
+                                </button>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Confirmed Bookings Table -->
+            <div class="bookings-table-wrapper">
+                <div style="padding: 30px;">
+                    <h2 class="section-title">Confirmed Bookings</h2>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="booking-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Sport</th>
+                                    <th>Turf</th>
+                                    <th>Time</th>
+                                    <th>Date</th>
+                                    <th>Cancel</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in bookings %}
+                                <tr>
+                                    <td>{{ b[1] }}</td>
+                                    <td>{{ b[2] }}</td>
+                                    <td>{{ b[3] }}</td>
+                                    <td>{{ b[4] }}</td>
+                                    <td>{{ b[5] }}</td>
+                                    <td style="text-align: center;">
+                                        <a href="/cancelpage/{{ b[0] }}" class="cancel-btn">
+                                            <i class="fa-solid fa-trash"></i> Cancel
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px;">
+                                        <i class="fa-regular fa-calendar-check"></i> No confirmed bookings yet
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="admin-footer">
+        <a href="/login" class="admin-link">
+            <i class="fa-solid fa-lock"></i> Admin Login
+        </a>
+    </div>
 
-<select name="sport" required>
-<option value="">Select Sport</option>
-<option value="Football">Football</option>
-<option value="Volleyball">Volleyball</option>
-</select>
+    <style>
+        /* Additional styles for new elements */
+        .booking-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .booking-table th,
+        .booking-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .booking-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .booking-table tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 12px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background: #c82333;
+            transform: scale(1.05);
+        }
+        
+        .booked {
+            background: #dc3545 !important;
+            color: white !important;
+            cursor: not-allowed !important;
+            opacity: 0.7;
+        }
+        
+        .available {
+            background: #28a745 !important;
+            color: white !important;
+        }
+        
+        .available:hover {
+            background: #218838 !important;
+            transform: translateY(-2px);
+        }
+        
+        .slots-grid button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideInRight 0.5s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 
-<select name="turf" required>
-<option value="">Select Turf</option>
-<option value="A1">A1</option>
-<option value="A2">A2</option>
-</select>
-
-<!-- Date input with min attribute to block past dates -->
-<input type="date" name="date" min="{{ today_date }}" required>
-
-<h3>Select Slot</h3>
-
-<div class="slots">
-
-<label><input type="radio" name="slot" value="06:00 AM" required>6:00 AM</label>
-<label><input type="radio" name="slot" value="07:00 AM">7:00 AM</label>
-<label><input type="radio" name="slot" value="08:00 AM">8:00 AM</label>
-<label><input type="radio" name="slot" value="09:00 AM">9:00 AM</label>
-<label><input type="radio" name="slot" value="10:00 AM">10:00 AM</label>
-<label><input type="radio" name="slot" value="11:00 AM">11:00 AM</label>
-<label><input type="radio" name="slot" value="12:00 PM">12:00 PM</label>
-<label><input type="radio" name="slot" value="01:00 PM">1:00 PM</label>
-<label><input type="radio" name="slot" value="02:00 PM">2:00 PM</label>
-<label><input type="radio" name="slot" value="03:00 PM">3:00 PM</label>
-<label><input type="radio" name="slot" value="04:00 PM">4:00 PM</label>
-<label><input type="radio" name="slot" value="05:00 PM">5:00 PM</label>
-<label><input type="radio" name="slot" value="06:00 PM">6:00 PM</label>
-<label><input type="radio" name="slot" value="07:00 PM">7:00 PM</label>
-<label><input type="radio" name="slot" value="08:00 PM">8:00 PM</label>
-<label><input type="radio" name="slot" value="09:00 PM">9:00 PM</label>
-<label><input type="radio" name="slot" value="10:00 PM">10:00 PM</label>
-<label><input type="radio" name="slot" value="11:00 PM">11:00 PM</label>
-
-</div>
-
-<button type="submit" class="confirmbtn">
-Confirm Booking
-</button>
-
-</form>
-
-<h2>Booked Slots</h2>
-
-<form method="GET">
-<label>Select Date:</label>
-<input type="date" name="date" value="{{ date }}">
-<button type="submit">View Slots</button>
-</form>
-
-<div class="slots">
-
-{% for s in slots %}
-    {% if s in booked %}
-        <!-- 🔴 BOOKED SLOT -->
-        <button class="booked" disabled type="button">{{ s }}</button>
-    {% else %}
-        <!-- 🟢 AVAILABLE SLOT -->
-        <button class="available" type="button">{{ s }}</button>
-    {% endif %}
-{% endfor %}
-
-</div>
-
-<h2>Confirmed Bookings</h2>
-
-<table border="1" cellpadding="10" cellspacing="0" style="width:100%; border-collapse: collapse;">
-    <thead>
-        <tr style="background-color: #f2f2f2;">
-            <th>Name</th>
-            <th>Sport</th>
-            <th>Turf</th>
-            <th>Time</th>
-            <th>Date</th>
-            <th>Cancel</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for b in bookings %}
-        <tr>
-            <td>{{ b[1] }}</td>
-            <td>{{ b[2] }}</td>
-            <td>{{ b[3] }}</td>
-            <td>{{ b[4] }}</td>
-            <td>{{ b[5] }}</td>
-            <td style="text-align: center;">
-                <a href="/cancelpage/{{ b[0] }}" class="cancel-link">Cancel</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="6" style="text-align: center; padding: 20px;">No confirmed bookings found</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<div style="text-align: center; margin-top: 30px; padding: 20px;">
-    <a href="/login" class="admin-link">🔐 Admin Login →</a>
-</div>
-
+    <script>
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+        
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>
