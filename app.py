@@ -7,6 +7,7 @@ from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here-change-in-production')
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 # Database configuration
 DB_CONFIG = {
@@ -40,6 +41,14 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.after_request
+def add_header(response):
+    """Add headers to prevent caching"""
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 # --- LOGIN ROUTES ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -71,7 +80,7 @@ def homepage():
     return render_template('homepage.html')
 
 # --- BOOKING ROUTE ---
-@app.route('/booking', methods=['GET', 'POST'])
+@app.route('/booking', methods=['GET'])
 def booking():
     try:
         db = get_db_connection()
@@ -79,10 +88,17 @@ def booking():
             return "Database connection failed", 500
         
         cursor = db.cursor()
-
-        # Check if status column exists
+        
+        # Ensure status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
+        if not cursor.fetchone():
+            try:
+                cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
+                db.commit()
+                cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+                db.commit()
+            except Exception as e:
+                print(f"Error adding status column: {e}")
 
         # Get selected date
         selected_date = request.args.get("date")
@@ -90,16 +106,10 @@ def booking():
             selected_date = d.today().strftime("%Y-%m-%d")
 
         # Get booked slots for selected date
-        if status_exists:
-            cursor.execute(
-                "SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'",
-                (selected_date,)
-            )
-        else:
-            cursor.execute(
-                "SELECT slot_time FROM bookings WHERE booking_date=%s",
-                (selected_date,)
-            )
+        cursor.execute(
+            "SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'",
+            (selected_date,)
+        )
         booked = [row[0] for row in cursor.fetchall()]
 
         # Get today's date for min attribute
@@ -156,21 +166,19 @@ def book():
         if selected_date < today:
             return "Cannot book for past dates! Please select today or a future date.", 400
 
-        # Check if status column exists
+        # Ensure status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
+        if not cursor.fetchone():
+            cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
+            db.commit()
+            cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+            db.commit()
 
         # Check if slot already booked and confirmed
-        if status_exists:
-            cursor.execute("""
-                SELECT * FROM bookings
-                WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='confirmed'
-            """, (turf, slot, booking_date))
-        else:
-            cursor.execute("""
-                SELECT * FROM bookings
-                WHERE turf=%s AND slot_time=%s AND booking_date=%s
-            """, (turf, slot, booking_date))
+        cursor.execute("""
+            SELECT * FROM bookings
+            WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='confirmed'
+        """, (turf, slot, booking_date))
 
         existing = cursor.fetchone()
 
@@ -179,25 +187,18 @@ def book():
             db.close()
             return "Slot already booked for this turf!"
 
-        # Insert booking
-        if status_exists:
-            cursor.execute("""
-                INSERT INTO bookings (name, sport, turf, slot_time, booking_date, status)
-                VALUES (%s, %s, %s, %s, %s, 'pending')
-            """, (name, sport, turf, slot, booking_date))
-            flash('Booking request submitted successfully! Waiting for admin confirmation.', 'success')
-        else:
-            cursor.execute("""
-                INSERT INTO bookings (name, sport, turf, slot_time, booking_date)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (name, sport, turf, slot, booking_date))
-            flash('Booking confirmed successfully!', 'success')
+        # Insert booking with pending status
+        cursor.execute("""
+            INSERT INTO bookings (name, sport, turf, slot_time, booking_date, status)
+            VALUES (%s, %s, %s, %s, %s, 'pending')
+        """, (name, sport, turf, slot, booking_date))
 
         db.commit()
         
         cursor.close()
         db.close()
         
+        flash('Booking request submitted successfully! Waiting for admin confirmation.', 'success')
         return redirect('/mybookings')
     
     except Exception as e:
@@ -214,26 +215,40 @@ def mybookings():
             return "Database connection failed", 500
         
         cursor = db.cursor()
-
-        # Check if status column exists
+        
+        # Check if status column exists and add if needed
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
+        if not cursor.fetchone():
+            try:
+                cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
+                db.commit()
+                cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+                db.commit()
+            except Exception as e:
+                print(f"Error adding status column: {e}")
         
-        # Get all bookings (in a real app, you'd filter by user, but for demo we show all)
-        if status_exists:
-            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
-        else:
-            cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
+        # Update any bookings with NULL status
+        cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+        db.commit()
         
+        # Get all bookings
+        cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
         all_bookings = cursor.fetchall()
         
         cursor.close()
         db.close()
-
+        
+        # Calculate statistics
+        total = len(all_bookings)
+        confirmed = sum(1 for b in all_bookings if len(b) > 6 and b[6] == 'confirmed')
+        pending = sum(1 for b in all_bookings if len(b) > 6 and b[6] == 'pending')
+        
         return render_template(
             "mybookings.html",
             bookings=all_bookings,
-            status_exists=status_exists
+            total_bookings=total,
+            confirmed_count=confirmed,
+            pending_count=pending
         )
     
     except Exception as e:
@@ -253,19 +268,15 @@ def admin_panel():
         
         # Check if status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
-        
-        if not status_exists:
-            # Add status column automatically
+        if not cursor.fetchone():
             try:
                 cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
                 db.commit()
-                flash('Status column added successfully!', 'success')
+                cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+                db.commit()
+                flash('✅ Status column added successfully!', 'success')
             except Exception as e:
                 flash(f'Error adding status column: {str(e)}', 'error')
-                cursor.close()
-                db.close()
-                return redirect('/')
         
         # Get pending bookings
         cursor.execute("""
@@ -303,7 +314,8 @@ def confirm_booking(id):
     try:
         db = get_db_connection()
         if db is None:
-            return "Database connection failed", 500
+            flash("Database connection failed", "error")
+            return redirect('/admin')
         
         cursor = db.cursor()
         
@@ -319,7 +331,7 @@ def confirm_booking(id):
         cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
         db.commit()
         
-        flash(f'Booking confirmed for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
+        flash(f'✅ Booking confirmed for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
         
         cursor.close()
         db.close()
@@ -337,7 +349,8 @@ def reject_booking(id):
     try:
         db = get_db_connection()
         if db is None:
-            return "Database connection failed", 500
+            flash("Database connection failed", "error")
+            return redirect('/admin')
         
         cursor = db.cursor()
         
@@ -353,7 +366,7 @@ def reject_booking(id):
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
         
-        flash(f'Booking rejected for {booking[1]}', 'info')
+        flash(f'❌ Booking rejected for {booking[1]}', 'info')
         
         cursor.close()
         db.close()
@@ -365,7 +378,6 @@ def reject_booking(id):
         flash(f'Error rejecting booking: {str(e)}', 'error')
         return redirect('/admin')
 
-# --- ADMIN CANCEL BOOKING ROUTE ---
 @app.route('/admin/cancel_booking/<int:id>')
 @login_required
 def admin_cancel_booking(id):
@@ -390,7 +402,7 @@ def admin_cancel_booking(id):
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
         
-        flash(f'Booking cancelled successfully for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
+        flash(f'✅ Booking cancelled successfully for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
         
         cursor.close()
         db.close()
@@ -412,10 +424,6 @@ def cancelpage(id):
         
         cursor = db.cursor()
         
-        # Check if status column exists
-        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
-        
         # Get booking details
         cursor.execute("SELECT * FROM bookings WHERE id=%s", (id,))
         booking = cursor.fetchone()
@@ -427,11 +435,10 @@ def cancelpage(id):
             flash('Booking not found', 'error')
             return redirect('/mybookings')
 
-        # If status column exists, only confirmed bookings can be cancelled
-        if status_exists:
-            if len(booking) > 6 and booking[6] != 'confirmed':
-                flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
-                return redirect('/mybookings')
+        # Check if booking is confirmed
+        if len(booking) > 6 and booking[6] != 'confirmed':
+            flash('Confirmed bookings cannot be cancelled. Please contact admin for cancellation.', 'error')
+            return redirect('/mybookings')
 
         return render_template("cancel.html", booking=booking)
     
@@ -449,10 +456,6 @@ def confirmcancel(id):
         
         cursor = db.cursor()
         
-        # Check if status column exists
-        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        status_exists = cursor.fetchone()
-        
         # Get booking details
         cursor.execute("SELECT * FROM bookings WHERE id=%s", (id,))
         booking = cursor.fetchone()
@@ -463,13 +466,12 @@ def confirmcancel(id):
             flash('Booking not found', 'error')
             return redirect('/mybookings')
         
-        # If status column exists, verify booking is confirmed before deletion
-        if status_exists:
-            if len(booking) > 6 and booking[6] != 'confirmed':
-                cursor.close()
-                db.close()
-                flash('Confirmed bookings unfortunately cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
-                return redirect('/mybookings')
+        # Verify booking is confirmed before deletion
+        if len(booking) > 6 and booking[6] != 'confirmed':
+            cursor.close()
+            db.close()
+            flash('Confirmed bookings cannot be cancelled. Please contact admin.', 'error')
+            return redirect('/mybookings')
         
         # Delete the booking
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
@@ -482,7 +484,7 @@ def confirmcancel(id):
         if affected_rows == 0:
             flash('Booking not found', 'error')
         else:
-            flash('Booking cancelled successfully!', 'success')
+            flash('✅ Booking cancelled successfully!', 'success')
             
         return redirect('/mybookings')
     
@@ -490,6 +492,90 @@ def confirmcancel(id):
         print(f"Error in confirmcancel route: {e}")
         flash(f'An error occurred while cancelling: {str(e)}', 'error')
         return redirect('/mybookings')
+
+# --- FIX DATABASE ROUTE ---
+@app.route('/fix-database')
+def fix_database():
+    """Fix database by adding status column"""
+    try:
+        db = get_db_connection()
+        if db is None:
+            return "Database connection failed", 500
+        
+        cursor = db.cursor()
+        
+        # Check if status column exists
+        cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
+        status_exists = cursor.fetchone()
+        
+        messages = []
+        
+        if not status_exists:
+            cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
+            db.commit()
+            messages.append("✅ Status column added successfully!")
+        else:
+            messages.append("ℹ️ Status column already exists")
+        
+        # Update all existing bookings to confirmed
+        cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
+        db.commit()
+        updated_count = cursor.rowcount
+        messages.append(f"✅ Updated {updated_count} bookings to 'confirmed' status")
+        
+        # Get current bookings
+        cursor.execute("SELECT id, name, status FROM bookings ORDER BY id DESC")
+        bookings = cursor.fetchall()
+        
+        cursor.close()
+        db.close()
+        
+        # Display results
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Database Fix - Sports Center</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+                .container { background: white; padding: 20px; border-radius: 8px; max-width: 800px; margin: 0 auto; }
+                .success { color: green; font-weight: bold; }
+                table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background: #4CAF50; color: white; }
+                .btn { display: inline-block; background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; margin-right: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Database Fix Results</h1>
+        """
+        
+        for msg in messages:
+            html += f"<p class='success'>✓ {msg}</p>"
+        
+        html += "<h2>Current Bookings with Status:</h2>"
+        html += "<table><tr><th>ID</th><th>Name</th><th>Status</th></tr>"
+        
+        for booking in bookings:
+            status_color = "green" if booking[2] == 'confirmed' else "orange"
+            html += f"<tr><td>#{booking[0]}</td><td>{booking[1]}</td><td style='color: {status_color}; font-weight: bold;'>{booking[2]}</td></tr>"
+        
+        html += """
+                </table>
+                <br>
+                <a href="/mybookings" class="btn">Go to My Bookings</a>
+                <a href="/admin" class="btn" style="background: #2196F3;">Go to Admin Panel</a>
+                <a href="/" class="btn" style="background: #666;">Go to Home</a>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return html
+    
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
