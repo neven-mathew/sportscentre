@@ -261,11 +261,6 @@
             transition: all 0.3s;
         }
 
-        .btn-book-now:hover {
-            background: #219653;
-            transform: translateY(-2px);
-        }
-
         .alert {
             position: fixed;
             top: 20px;
@@ -287,11 +282,6 @@
         .alert-error {
             border-left: 4px solid #dc3545;
             color: #721c24;
-        }
-
-        .alert-info {
-            border-left: 4px solid #17a2b8;
-            color: #0c5460;
         }
 
         @keyframes slideInRight {
@@ -324,10 +314,6 @@
                 font-size: 12px;
             }
             
-            .header h1 {
-                font-size: 24px;
-            }
-            
             .stats {
                 grid-template-columns: 1fr;
             }
@@ -350,7 +336,7 @@
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
-                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
                     {{ message }}
                 </div>
             {% endfor %}
@@ -366,7 +352,6 @@
             </a>
         </div>
 
-        <!-- Statistics Cards -->
         <div class="stats">
             <div class="stat-card total">
                 <h3>Total Bookings</h3>
@@ -382,7 +367,6 @@
             </div>
         </div>
 
-        <!-- Bookings Table -->
         <div class="bookings-table-wrapper">
             {% if bookings %}
             <table class="booking-table">
@@ -431,17 +415,17 @@
                         <td>
                             {% if booking|length > 6 %}
                                 {% if booking[6] == 'confirmed' %}
-                                    <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
-                                        <i class="fas fa-trash"></i> Cancel Booking
+                                    <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                        <i class="fas fa-trash"></i> Cancel
                                     </a>
                                 {% elif booking[6] == 'pending' %}
-                                    <span class="cancel-btn disabled" style="background: #ffc107; color: #856404; cursor: wait;">
-                                        <i class="fas fa-hourglass-half"></i> Awaiting Confirmation
+                                    <span class="cancel-btn disabled">
+                                        <i class="fas fa-hourglass-half"></i> Awaiting
                                     </span>
                                 {% endif %}
                             {% else %}
-                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
-                                    <i class="fas fa-trash"></i> Cancel Booking
+                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                    <i class="fas fa-trash"></i> Cancel
                                 </a>
                             {% endif %}
                         </td>
@@ -453,17 +437,13 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-check"></i>
                 <p>No bookings found</p>
-                <p style="font-size: 14px; margin-top: 10px;">Book your first slot to get started!</p>
-                <a href="/booking" class="btn-book-now" style="margin-top: 20px; display: inline-block;">
-                    <i class="fas fa-plus-circle"></i> Book Your First Slot
-                </a>
+                <a href="/booking" class="btn-book-now">Book Your First Slot</a>
             </div>
             {% endif %}
         </div>
     </div>
 
     <script>
-        // Auto-hide alerts after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
