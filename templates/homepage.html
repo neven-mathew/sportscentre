@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Center - Njarakkal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Navigation Bar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            color: #27ae60;
+            font-size: 28px;
+            font-weight: 800;
+            font-style: italic;
+            text-decoration: none;
+            letter-spacing: -1px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links a:hover {
+            color: #27ae60;
+        }
+
+        .btn-book {
+            background-color: #27ae60;
+            color: #ffffff !important;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .btn-book:hover {
+            background-color: #219653;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 75vh;
+            background: url('https://images.unsplash.com/photo-1556816214-cb30b38b81db?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-card {
+            position: relative;
+            background: linear-gradient(135deg, rgba(60, 75, 60, 0.85), rgba(40, 50, 40, 0.85));
+            backdrop-filter: blur(4px);
+            border-radius: 12px;
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            color: #ffffff;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stadium-circle-logo {
+            width: 110px;
+            height: 110px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .stadium-circle-logo-text {
+            color: #1e3799;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 16px;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .stadium-circle-logo-text span {
+            color: #e58e26;
+            display: block;
+            font-size: 10px;
+        }
+
+        .glass-card h1 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+        }
+
+        .glass-card p {
+            font-size: 18px;
+            margin: 0 0 30px 0;
+            color: #e0e0e0;
+            line-height: 1.5;
+        }
+
+        .btn-slots {
+            background-color: #68c87a;
+            color: #ffffff;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-slots:hover {
+            background-color: #55b567;
+        }
+
+        /* Features Section */
+        .features {
+            background-color: #f4f4f4;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .features h2 {
+            font-size: 32px;
+            margin: 0 0 40px 0;
+            color: #333;
+        }
+
+        .features-grid {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-item {
+            text-align: center;
+            max-width: 300px;
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .feature-text h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .feature-text p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Info Section */
+        .info-section {
+            background: white;
+            padding: 60px 20px;
+        }
+
+        .info-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .info-card {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f9f9f9;
+            transition: transform 0.3s;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .info-card i {
+            font-size: 48px;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .info-card h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .admin-link {
+            color: #27ae60;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 15px 20px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .nav-links a span {
+                display: none;
+            }
+            
+            .glass-card h1 {
+                font-size: 18px;
+            }
+            
+            .features h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">SportsCenter</a>
+        <div class="nav-links">
+            <a href="/"><i class="fas fa-home"></i> <span>Home</span></a>
+            <a href="/booking"><i class="fas fa-calendar-alt"></i> <span>Book Now</span></a>
+            <a href="/mybookings"><i class="fas fa-list"></i> <span>My Bookings</span></a>
+            <a href="/login" class="btn-book"><i class="fas fa-user-shield"></i> <span>Admin</span></a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="glass-card">
+            <div class="stadium-circle-logo">
+                <div class="stadium-circle-logo-text">
+                    SPORTS<br>CENTER
+                    <span>NJARAKKAL</span>
+                </div>
+            </div>
+            
+            <h1>Sports Center, Hospital Junction, Njarakkal</h1>
+            <p>Premium indoor sports facility with professional-grade turfs</p>
+            
+            <a href="/booking" class="btn-slots">Book Your Slots Now</a>
+        </div>
+    </header>
+
+    <section class="features">
+        <h2>Sports Available</h2>
+        <div class="features-grid">
+            <div class="feature-item">
+                <i class="fa-regular fa-futbol feature-icon"></i>
+                <div class="feature-text">
+                    <h3>Football</h3>
+                    <p>7'S and 5'S formats available with professional turf quality</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <i class="fa-solid fa-baseball-bat-ball feature-icon"></i>
+                <div class="feature-text">
+                    <h3>Cricket</h3>
+                    <p>9A format with premium pitch and practice nets</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="info-section">
+        <div class="info-container">
+            <div class="info-card">
+                <i class="fas fa-clock"></i>
+                <h3>Operating Hours</h3>
+                <p>Monday - Sunday<br>6:00 AM to 11:00 PM</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-map-marker-alt"></i>
+                <h3>Location</h3>
+                <p>Hospital Junction, Njarakkal<br>Ernakulam, Kerala</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-phone"></i>
+                <h3>Contact Us</h3>
+                <p>Phone: +91 1234567890<br>Email: info@sportscenter.com</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="footer">
+        <p>&copy; 2024 Sports Center. All rights reserved.</p>
+        <a href="/login" class="admin-link"><i class="fas fa-lock"></i> Admin Login</a>
+    </div>
+</body>
+</html>
