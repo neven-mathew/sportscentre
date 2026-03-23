@@ -350,7 +350,6 @@ def confirm_booking(id):
         
         cursor = db.cursor()
         
-        # Check if the booking exists and is pending
         cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='pending'", (id,))
         booking = cursor.fetchone()
         
@@ -358,7 +357,7 @@ def confirm_booking(id):
             flash('Booking not found or already processed', 'error')
             return redirect('/admin')
         
-        # Confirm the booking - change status to confirmed
+        # Set status to lowercase 'confirmed'
         cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
         db.commit()
         
@@ -366,14 +365,12 @@ def confirm_booking(id):
         
         cursor.close()
         db.close()
-        
         return redirect('/admin')
     
     except Exception as e:
         print(f"Error in confirm_booking: {e}")
         flash(f'Error confirming booking: {str(e)}', 'error')
         return redirect('/admin')
-
 @app.route('/admin/reject/<int:id>')
 @login_required
 def reject_booking(id):
