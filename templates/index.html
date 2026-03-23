@@ -6,7 +6,13 @@
 </head>
 
 <body>
-
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
 <h1>Sports Centre Booking</h1>
 
@@ -53,6 +59,9 @@
 <label><input type="radio" name="slot" value="06:00 PM">6:00 PM</label>
 <label><input type="radio" name="slot" value="07:00 PM">7:00 PM</label>
 <label><input type="radio" name="slot" value="08:00 PM">8:00 PM</label>
+<label><input type="radio" name="slot" value="09:00 PM">9:00 PM</label>
+<label><input type="radio" name="slot" value="10:00 PM">10:00 PM</label>
+<label><input type="radio" name="slot" value="11:00 PM">11:00 PM</label>
 
 </div>
 
@@ -84,31 +93,42 @@ Confirm Booking
 
 </div>
 
-<table>
+<h2>Confirmed Bookings</h2>
 
-<tr>
-<th>Name</th>
-<th>Sport</th>
-<th>Turf</th>
-<th>Time</th>
-<th>Date</th>
-<th>Cancel</th>
-</tr>
-
-{% for b in bookings %}
-<tr>
-<td>{{ b[1] }}</td>
-<td>{{ b[2] }}</td>
-<td>{{ b[3] }}</td>
-<td>{{ b[4] }}</td>
-<td>{{ b[5] }}</td>
-<td>
-<a href="/cancelpage/{{ b[0] }}">Cancel</a>
-</td>
-</tr>
-{% endfor %}
-
+<table border="1" cellpadding="10" cellspacing="0" style="width:100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background-color: #f2f2f2;">
+            <th>Name</th>
+            <th>Sport</th>
+            <th>Turf</th>
+            <th>Time</th>
+            <th>Date</th>
+            <th>Cancel</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bookings %}
+        <tr>
+            <td>{{ b[1] }}</td>
+            <td>{{ b[2] }}</td>
+            <td>{{ b[3] }}</td>
+            <td>{{ b[4] }}</td>
+            <td>{{ b[5] }}</td>
+            <td style="text-align: center;">
+                <a href="/cancelpage/{{ b[0] }}" class="cancel-link">Cancel</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" style="text-align: center; padding: 20px;">No confirmed bookings found</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
+
+<div style="text-align: center; margin-top: 30px; padding: 20px;">
+    <a href="/login" class="admin-link">🔐 Admin Login →</a>
+</div>
 
 </body>
 </html>
