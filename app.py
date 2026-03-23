@@ -356,7 +356,7 @@ def cancelpage(id):
         # If status column exists, only confirmed bookings can be cancelled
         if status_exists:
             if len(booking) > 6 and booking[6] != 'confirmed':
-                flash('Only confirmed bookings can be cancelled. Please contact admin for pending bookings.', 'error')
+                flash('Confirmed Bookings, unfortuantely cannot be cancelled. Please contact admin for cancellation of the bookings.', 'error')
                 return redirect('/')
         # If no status column, all bookings can be cancelled
 
