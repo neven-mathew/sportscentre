@@ -18,6 +18,7 @@
             min-height: 100vh;
         }
 
+        /* Navigation Bar (same as admin panel) */
         .navbar {
             display: flex;
             justify-content: space-between;
@@ -65,35 +66,41 @@
             border-radius: 6px;
         }
 
+        /* Main Container */
         .container {
             max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
         }
 
+        /* Header (same style as admin panel's section header) */
         .header {
-            background: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 15px;
             padding: 30px;
             margin-bottom: 30px;
             text-align: center;
+            color: white;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         .header h1 {
-            color: #333;
             font-size: 32px;
             margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
 
         .header p {
-            color: #666;
             font-size: 16px;
             margin-bottom: 15px;
+            opacity: 0.9;
         }
 
         .refresh-btn {
-            background: #27ae60;
+            background: rgba(255,255,255,0.2);
             color: white;
             padding: 10px 20px;
             border-radius: 6px;
@@ -102,18 +109,18 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
-            border: none;
-            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .refresh-btn:hover {
-            background: #219653;
+            background: rgba(255,255,255,0.3);
             transform: translateY(-2px);
         }
 
-        .stats {
+        /* Statistics Cards (matching admin panel) */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -122,7 +129,9 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s;
         }
@@ -131,8 +140,8 @@
             transform: translateY(-5px);
         }
 
-        .stat-card h3 {
-            color: #666;
+        .stat-info h3 {
+            color: #888;
             font-size: 14px;
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -142,20 +151,15 @@
         .stat-number {
             font-size: 36px;
             font-weight: bold;
+            color: #333;
         }
 
-        .stat-card.total .stat-number {
-            color: #27ae60;
+        .stat-icon {
+            font-size: 48px;
+            opacity: 0.3;
         }
 
-        .stat-card.confirmed .stat-number {
-            color: #28a745;
-        }
-
-        .stat-card.pending .stat-number {
-            color: #ffc107;
-        }
-
+        /* Table Styles (same as admin panel) */
         .bookings-table-wrapper {
             background: white;
             border-radius: 15px;
@@ -187,6 +191,7 @@
             background: #f8f9fa;
         }
 
+        /* Badges (same as admin panel) */
         .badge {
             display: inline-block;
             padding: 5px 12px;
@@ -207,6 +212,7 @@
             border: 1px solid #ffeeba;
         }
 
+        /* Action Buttons */
         .cancel-btn {
             background: #dc3545;
             color: white;
@@ -218,19 +224,11 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s;
-            border: none;
-            cursor: pointer;
         }
 
         .cancel-btn:hover {
             background: #c82333;
             transform: scale(1.05);
-        }
-
-        .cancel-btn.disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            pointer-events: none;
         }
 
         .pending-btn {
@@ -243,8 +241,10 @@
             align-items: center;
             gap: 5px;
             cursor: not-allowed;
+            opacity: 0.8;
         }
 
+        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -257,6 +257,7 @@
             opacity: 0.5;
         }
 
+        /* Alerts */
         .alert {
             position: fixed;
             top: 20px;
@@ -291,6 +292,7 @@
             }
         }
 
+        /* Responsive */
         @media (max-width: 768px) {
             .navbar {
                 padding: 15px 20px;
@@ -306,184 +308,9 @@
                 padding: 10px;
                 font-size: 12px;
             }
-            .stats {
+            .stats-grid {
                 grid-template-columns: 1fr;
             }
-        }
-
-        /* Admin Dashboard Styles */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card.pending, .stat-card.confirmed {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 25px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .stat-card.pending:hover, .stat-card.confirmed:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-info h3 {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .stat-icon {
-            font-size: 48px;
-            opacity: 0.7;
-        }
-
-        .stat-card.pending .stat-number {
-            color: #ffc107;
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .stat-card.confirmed .stat-number {
-            color: #28a745;
-            font-size: 36px;
-            font-weight: bold;
-        }
-
-        .section {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .section-header {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .section-header h2 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .section-header h2 i {
-            color: #27ae60;
-            margin-right: 10px;
-        }
-
-        .section-header p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .confirm-btn {
-            background: #28a745;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .confirm-btn:hover {
-            background: #218838;
-            transform: scale(1.05);
-        }
-
-        .reject-btn {
-            background: #dc3545;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .reject-btn:hover {
-            background: #c82333;
-            transform: scale(1.05);
-        }
-
-        .cancel-booking-btn {
-            background: #dc3545;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .cancel-booking-btn:hover {
-            background: #c82333;
-            transform: scale(1.05);
-        }
-
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: white;
-            color: #27ae60;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
-
-        .back-link:hover {
-            background: #27ae60;
-            color: white;
-            transform: translateX(-5px);
-        }
-
-        .admin-badge {
-            background: #27ae60;
-            color: white !important;
-            padding: 8px 16px;
-            border-radius: 6px;
         }
     </style>
 </head>
@@ -495,12 +322,7 @@
             <a href="/"><i class="fas fa-home"></i> <span>Home</span></a>
             <a href="/booking"><i class="fas fa-calendar-alt"></i> <span>Book Now</span></a>
             <a href="/mybookings"><i class="fas fa-list"></i> <span>My Bookings</span></a>
-            {% if session.user_id %}
-                <a href="/logout"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></a>
-                <a href="/admin" class="admin-badge"><i class="fas fa-user-shield"></i> <span>Admin</span></a>
-            {% else %}
-                <a href="/login" class="btn-book"><i class="fas fa-user-shield"></i> <span>Admin</span></a>
-            {% endif %}
+            <a href="/login" class="btn-book"><i class="fas fa-user-shield"></i> <span>Admin</span></a>
         </div>
     </nav>
 
@@ -515,148 +337,6 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Admin Dashboard Section -->
-    {% if request.endpoint == 'admin_dashboard' %}
-    <div class="container">
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card pending">
-                <div class="stat-info">
-                    <h3>Pending Bookings</h3>
-                    <div class="stat-number">{{ pending_bookings|length }}</div>
-                </div>
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-            <div class="stat-card confirmed">
-                <div class="stat-info">
-                    <h3>Confirmed Bookings</h3>
-                    <div class="stat-number">{{ confirmed_bookings|length }}</div>
-                </div>
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Bookings Section -->
-        <div class="section">
-            <div class="section-header">
-                <h2>
-                    <i class="fas fa-hourglass-half"></i>
-                    Pending Bookings
-                </h2>
-                <p>Review and confirm or reject booking requests</p>
-            </div>
-            <div class="table-wrapper">
-                {% if pending_bookings %}
-                <table class="booking-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Sport</th>
-                            <th>Turf</th>
-                            <th>Time</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for booking in pending_bookings %}
-                        <tr>
-                            <td>#{{ booking[0] }}</td>
-                            <td><strong>{{ booking[1] }}</strong></td>
-                            <td>{{ booking[2] }}</td>
-                            <td>{{ booking[3] }}</td>
-                            <td>{{ booking[4] }}</td>
-                            <td>{{ booking[5] }}</td>
-                            <td><span class="badge badge-pending">Pending</span></td>
-                            <td class="action-buttons">
-                                <a href="/admin/confirm/{{ booking[0] }}" class="confirm-btn" onclick="return confirm('Confirm this booking for {{ booking[1] }}?')">
-                                    <i class="fas fa-check"></i> Confirm
-                                </a>
-                                <a href="/admin/reject/{{ booking[0] }}" class="reject-btn" onclick="return confirm('Reject this booking for {{ booking[1] }}?')">
-                                    <i class="fas fa-times"></i> Reject
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>No pending bookings at the moment</p>
-                    <p style="font-size: 14px; margin-top: 10px;">All booking requests have been processed</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Confirmed Bookings Section with Cancel Option -->
-        <div class="section">
-            <div class="section-header">
-                <h2>
-                    <i class="fas fa-check-circle"></i>
-                    Confirmed Bookings
-                </h2>
-                <p>All confirmed and approved bookings - Click cancel to remove booking</p>
-            </div>
-            <div class="table-wrapper">
-                {% if confirmed_bookings %}
-                <table class="booking-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Sport</th>
-                            <th>Turf</th>
-                            <th>Time</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for booking in confirmed_bookings %}
-                        <tr>
-                            <td>#{{ booking[0] }}</td>
-                            <td><strong>{{ booking[1] }}</strong></td>
-                            <td>{{ booking[2] }}</td>
-                            <td>{{ booking[3] }}</td>
-                            <td>{{ booking[4] }}</td>
-                            <td>{{ booking[5] }}</td>
-                            <td><span class="badge badge-confirmed">Confirmed</span></td>
-                            <td class="action-buttons">
-                                <a href="/admin/cancel_booking/{{ booking[0] }}" class="cancel-booking-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to CANCEL this booking for {{ booking[1] }}?\n\nThis action cannot be undone and the slot will become available again.')">
-                                    <i class="fas fa-trash-alt"></i> Cancel Booking
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-calendar-check"></i>
-                    <p>No confirmed bookings yet</p>
-                    <p style="font-size: 14px; margin-top: 10px;">Confirmed bookings will appear here</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Back to Home -->
-        <a href="/" class="back-link">
-            <i class="fas fa-arrow-left"></i> Back to Homepage
-        </a>
-    </div>
-    
-    <!-- User Bookings Section -->
-    {% else %}
     <div class="container">
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> My Bookings</h1>
@@ -666,18 +346,33 @@
             </a>
         </div>
 
-        <div class="stats">
-            <div class="stat-card total">
-                <h3>Total Bookings</h3>
-                <div class="stat-number">{{ total_bookings }}</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Total Bookings</h3>
+                    <div class="stat-number">{{ total_bookings }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
             </div>
-            <div class="stat-card confirmed">
-                <h3>Confirmed</h3>
-                <div class="stat-number">{{ confirmed_count }}</div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Confirmed</h3>
+                    <div class="stat-number">{{ confirmed_count }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
             </div>
-            <div class="stat-card pending">
-                <h3>Pending</h3>
-                <div class="stat-number">{{ pending_count }}</div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Pending</h3>
+                    <div class="stat-number">{{ pending_count }}</div>
+                </div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
             </div>
         </div>
 
@@ -744,10 +439,8 @@
             {% endif %}
         </div>
     </div>
-    {% endif %}
 
     <script>
-        // Auto-hide alerts after 5 seconds
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
