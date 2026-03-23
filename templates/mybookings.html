@@ -319,7 +319,7 @@
             {% if bookings %}
             <table class="booking-table">
                 <thead>
-                    2
+                    <tr>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Sport</th>
@@ -328,7 +328,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </thead>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
@@ -344,13 +344,9 @@
                                 <span class="badge badge-confirmed">
                                     <i class="fas fa-check-circle"></i> Confirmed
                                 </span>
-                            {% elif booking[6] == 'pending' %}
-                                <span class="badge badge-pending">
-                                    <i class="fas fa-clock"></i> Pending Approval
-                                </span>
                             {% else %}
                                 <span class="badge badge-pending">
-                                    <i class="fas fa-question-circle"></i> Pending
+                                    <i class="fas fa-clock"></i> Pending Approval
                                 </span>
                             {% endif %}
                         </td>
@@ -393,10 +389,15 @@
             });
         }, 5000);
         
-        // Auto-refresh page every 30 seconds to check for status updates
-        setInterval(function() {
+        // Auto-refresh page every 15 seconds to check for status updates
+        let refreshInterval = setInterval(function() {
             location.reload();
-        }, 30000);
+        }, 15000);
+        
+        // Clear interval on page unload
+        window.addEventListener('beforeunload', function() {
+            clearInterval(refreshInterval);
+        });
     </script>
 </body>
 </html>
