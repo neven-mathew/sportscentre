@@ -190,19 +190,49 @@
         .admin-footer {
             text-align: center;
             margin-top: 40px;
-            padding: 20px;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         .admin-link {
-            color: #27ae60;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
             text-decoration: none;
+            border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s;
+            font-size: 16px;
         }
 
         .admin-link:hover {
-            color: #219653;
-            text-decoration: underline;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Admin button in navbar */
+        .btn-admin {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -216,6 +246,14 @@
             
             .booking-form {
                 padding: 20px;
+            }
+            
+            .nav-right {
+                gap: 10px;
+            }
+            
+            .btn-admin span {
+                display: none;
             }
         }
     </style>
@@ -233,8 +271,11 @@
     <nav class="navbar">
         <a href="/" class="logo">SportsCenter</a>
         <div class="nav-right">
+            <a href="/login" class="btn-admin">
+                <i class="fas fa-user-shield"></i> <span>Admin Login</span>
+            </a>
             <a href="#booking-section" class="btn-book">
-                <i class="fa-solid fa-person-running"></i> Book Your Spot
+                <i class="fa-solid fa-person-running"></i> <span>Book Now</span>
             </a>
             <i class="fa-solid fa-bars hamburger"></i>
         </div>
@@ -444,7 +485,7 @@
                     <div style="overflow-x: auto;">
                         <table class="booking-table">
                             <thead>
-                                <tr>
+                                脂
                                     <th>Name</th>
                                     <th>Sport</th>
                                     <th>Turf</th>
@@ -482,10 +523,17 @@
         </div>
     </section>
     
+    <!-- Prominent Admin Login Section -->
     <div class="admin-footer">
+        <h3 style="color: #555; margin-bottom: 15px;">Administrator Access</h3>
         <a href="/login" class="admin-link">
-            <i class="fa-solid fa-lock"></i> Admin Login
+            <i class="fas fa-user-shield"></i> 
+            Admin Login
+            <i class="fas fa-arrow-right"></i>
         </a>
+        <p style="color: #888; margin-top: 15px; font-size: 14px;">
+            <i class="fas fa-lock"></i> Secure access for venue administrators
+        </p>
     </div>
 
     <style>
@@ -566,6 +614,20 @@
             z-index: 1000;
             max-width: 400px;
             animation: slideInRight 0.5s ease-out;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .alert-success {
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        
+        .alert-error {
+            border-left: 4px solid #dc3545;
+            color: #721c24;
         }
         
         @keyframes slideInRight {
@@ -604,7 +666,8 @@
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(alert => {
                 alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 300);
+                alert.style.transition = 'opacity 0.5s';
+                setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
     </script>
