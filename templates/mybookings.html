@@ -89,27 +89,8 @@
         .header p {
             color: #666;
             font-size: 16px;
-            margin-bottom: 15px;
         }
 
-        .refresh-btn {
-            background: #27ae60;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s;
-        }
-
-        .refresh-btn:hover {
-            background: #219653;
-            transform: translateY(-2px);
-        }
-
-        /* Stats cards */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -123,39 +104,20 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
         }
 
         .stat-card h3 {
             color: #666;
             font-size: 14px;
             margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .stat-number {
             font-size: 32px;
             font-weight: bold;
-        }
-
-        .stat-card.total .stat-number {
             color: #27ae60;
         }
 
-        .stat-card.confirmed .stat-number {
-            color: #28a745;
-        }
-
-        .stat-card.pending .stat-number {
-            color: #ffc107;
-        }
-
-        /* Table */
         .bookings-table-wrapper {
             background: white;
             border-radius: 15px;
@@ -187,7 +149,6 @@
             background: #f8f9fa;
         }
 
-        /* Badges */
         .badge {
             display: inline-block;
             padding: 4px 12px;
@@ -206,7 +167,11 @@
             color: #155724;
         }
 
-        /* Buttons */
+        .badge-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .cancel-btn {
             background: #dc3545;
             color: white;
@@ -218,6 +183,8 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s;
+            border: none;
+            cursor: pointer;
         }
 
         .cancel-btn:hover {
@@ -229,6 +196,24 @@
             background: #6c757d;
             cursor: not-allowed;
             pointer-events: none;
+        }
+
+        .refresh-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
         }
 
         .empty-state {
@@ -243,6 +228,11 @@
             opacity: 0.5;
         }
 
+        .empty-state p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
         .btn-book-now {
             display: inline-block;
             background: #27ae60;
@@ -252,6 +242,11 @@
             text-decoration: none;
             font-weight: bold;
             transition: all 0.3s;
+        }
+
+        .btn-book-now:hover {
+            background: #219653;
+            transform: translateY(-2px);
         }
 
         .alert {
@@ -277,6 +272,11 @@
             color: #721c24;
         }
 
+        .alert-info {
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -292,17 +292,25 @@
             .navbar {
                 padding: 15px 20px;
             }
+            
             .logo {
                 font-size: 24px;
             }
+            
             .nav-links a span {
                 display: none;
             }
+            
             .booking-table th,
             .booking-table td {
                 padding: 10px;
                 font-size: 12px;
             }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
             .stats {
                 grid-template-columns: 1fr;
             }
@@ -325,7 +333,7 @@
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
-                    <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                     {{ message }}
                 </div>
             {% endfor %}
@@ -341,28 +349,42 @@
             </a>
         </div>
 
-        <!-- Stats Cards -->
+        {% if bookings %}
+        {% set confirmed_count = 0 %}
+        {% set pending_count = 0 %}
+        {% for booking in bookings %}
+            {% if status_exists and booking|length > 6 %}
+                {% if booking[6] == 'confirmed' %}
+                    {% set confirmed_count = confirmed_count + 1 %}
+                {% else %}
+                    {% set pending_count = pending_count + 1 %}
+                {% endif %}
+            {% else %}
+                {% set confirmed_count = confirmed_count + 1 %}
+            {% endif %}
+        {% endfor %}
+        
         <div class="stats">
-            <div class="stat-card total">
+            <div class="stat-card">
                 <h3>Total Bookings</h3>
-                <div class="stat-number">{{ total_bookings }}</div>
+                <div class="stat-number">{{ bookings|length }}</div>
             </div>
-            <div class="stat-card confirmed">
+            <div class="stat-card">
                 <h3>Confirmed</h3>
-                <div class="stat-number">{{ confirmed_count }}</div>
+                <div class="stat-number" style="color: #28a745;">{{ confirmed_count }}</div>
             </div>
-            <div class="stat-card pending">
+            <div class="stat-card">
                 <h3>Pending</h3>
-                <div class="stat-number">{{ pending_count }}</div>
+                <div class="stat-number" style="color: #ffc107;">{{ pending_count }}</div>
             </div>
         </div>
+        {% endif %}
 
-        <!-- Bookings Table -->
         <div class="bookings-table-wrapper">
             {% if bookings %}
             <table class="booking-table">
                 <thead>
-                    2
+                    <tr>
                         <th>ID</th>
                         <th>Name</th>
                         <th>Sport</th>
@@ -371,7 +393,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </thead>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
@@ -393,8 +415,8 @@
                                         <i class="fas fa-clock"></i> Pending Approval
                                     </span>
                                 {% else %}
-                                    <span class="badge badge-pending">
-                                        <i class="fas fa-question-circle"></i> {{ booking[6] }}
+                                    <span class="badge badge-cancelled">
+                                        <i class="fas fa-times-circle"></i> {{ booking[6] }}
                                     </span>
                                 {% endif %}
                             {% else %}
