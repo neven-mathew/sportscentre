@@ -121,7 +121,7 @@ def booking():
             "10:00 AM","11:00 AM","12:00 PM","01:00 PM",
             "02:00 PM","03:00 PM","04:00 PM","05:00 PM",
             "06:00 PM","07:00 PM","08:00 PM","09:00 PM",
-            "10:00 PM","11:00 PM"
+            "10:00 PM",
         ]
 
         cursor.close()
@@ -333,10 +333,8 @@ def confirm_booking(id):
             return redirect('/admin')
         
         cursor = db.cursor()
-        
         cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='pending'", (id,))
         booking = cursor.fetchone()
-        
         if not booking:
             flash('Booking not found or already processed', 'error')
             return redirect('/admin')
@@ -344,13 +342,10 @@ def confirm_booking(id):
         # Set status to lowercase 'confirmed'
         cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
         db.commit()
-        
         flash(f'✅ Booking confirmed for {booking[1]} on {booking[5]} at {booking[4]}', 'success')
-        
         cursor.close()
         db.close()
         return redirect('/admin')
-    
     except Exception as e:
         print(f"Error in confirm_booking: {e}")
         flash(f'Error confirming booking: {str(e)}', 'error')
