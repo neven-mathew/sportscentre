@@ -370,7 +370,6 @@ def admin_cancel_booking(id):
         print(f"Error in admin_cancel_booking: {e}")
         flash(f'Error cancelling booking: {str(e)}', 'error')
         return redirect('/admin')
-
 # --- CANCEL ROUTES ---
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
