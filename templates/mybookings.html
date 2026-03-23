@@ -233,6 +233,18 @@
             pointer-events: none;
         }
 
+        .pending-btn {
+            background: #ffc107;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            cursor: not-allowed;
+        }
+
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -364,7 +376,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Action</th>
-                    </tr>
+                    </thead>
                 </thead>
                 <tbody>
                     {% for booking in bookings %}
@@ -386,7 +398,7 @@
                                 </span>
                             {% else %}
                                 <span class="badge badge-pending">
-                                    <i class="fas fa-question-circle"></i> {{ booking[6] or 'Unknown' }}
+                                    <i class="fas fa-question-circle"></i> Pending
                                 </span>
                             {% endif %}
                         </td>
@@ -395,14 +407,10 @@
                                 <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
                                     <i class="fas fa-trash"></i> Cancel
                                 </a>
-                            {% elif booking[6] == 'pending' %}
-                                <span class="cancel-btn disabled">
+                            {% else %}
+                                <span class="pending-btn">
                                     <i class="fas fa-hourglass-half"></i> Awaiting
                                 </span>
-                            {% else %}
-                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
-                                    <i class="fas fa-trash"></i> Cancel
-                                </a>
                             {% endif %}
                         </td>
                     </tr>
