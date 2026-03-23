@@ -91,6 +91,33 @@
             font-size: 16px;
         }
 
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
         .bookings-table-wrapper {
             background: white;
             border-radius: 15px;
@@ -140,6 +167,11 @@
             color: #155724;
         }
 
+        .badge-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
         .cancel-btn {
             background: #dc3545;
             color: white;
@@ -151,6 +183,8 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s;
+            border: none;
+            cursor: pointer;
         }
 
         .cancel-btn:hover {
@@ -162,6 +196,24 @@
             background: #6c757d;
             cursor: not-allowed;
             pointer-events: none;
+        }
+
+        .refresh-btn {
+            background: #27ae60;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
         }
 
         .empty-state {
@@ -220,6 +272,11 @@
             color: #721c24;
         }
 
+        .alert-info {
+            border-left: 4px solid #17a2b8;
+            color: #0c5460;
+        }
+
         @keyframes slideInRight {
             from {
                 opacity: 0;
@@ -253,6 +310,10 @@
             .header h1 {
                 font-size: 24px;
             }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -272,7 +333,7 @@
         {% if messages %}
             {% for category, message in messages %}
                 <div class="alert alert-{{ category }}">
-                    <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
                     {{ message }}
                 </div>
             {% endfor %}
@@ -283,7 +344,41 @@
         <div class="header">
             <h1><i class="fas fa-calendar-alt"></i> My Bookings</h1>
             <p>View and manage your booked slots</p>
+            <a href="/mybookings" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh Status
+            </a>
         </div>
+
+        {% if bookings %}
+        {% set confirmed_count = 0 %}
+        {% set pending_count = 0 %}
+        {% for booking in bookings %}
+            {% if status_exists and booking|length > 6 %}
+                {% if booking[6] == 'confirmed' %}
+                    {% set confirmed_count = confirmed_count + 1 %}
+                {% else %}
+                    {% set pending_count = pending_count + 1 %}
+                {% endif %}
+            {% else %}
+                {% set confirmed_count = confirmed_count + 1 %}
+            {% endif %}
+        {% endfor %}
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Bookings</h3>
+                <div class="stat-number">{{ bookings|length }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Confirmed</h3>
+                <div class="stat-number" style="color: #28a745;">{{ confirmed_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending</h3>
+                <div class="stat-number" style="color: #ffc107;">{{ pending_count }}</div>
+            </div>
+        </div>
+        {% endif %}
 
         <div class="bookings-table-wrapper">
             {% if bookings %}
@@ -312,27 +407,39 @@
                         <td>
                             {% if status_exists and booking|length > 6 %}
                                 {% if booking[6] == 'confirmed' %}
-                                    <span class="badge badge-confirmed"><i class="fas fa-check-circle"></i> Confirmed</span>
+                                    <span class="badge badge-confirmed">
+                                        <i class="fas fa-check-circle"></i> Confirmed
+                                    </span>
+                                {% elif booking[6] == 'pending' %}
+                                    <span class="badge badge-pending">
+                                        <i class="fas fa-clock"></i> Pending Approval
+                                    </span>
                                 {% else %}
-                                    <span class="badge badge-pending"><i class="fas fa-clock"></i> Pending</span>
+                                    <span class="badge badge-cancelled">
+                                        <i class="fas fa-times-circle"></i> {{ booking[6] }}
+                                    </span>
                                 {% endif %}
                             {% else %}
-                                <span class="badge badge-confirmed"><i class="fas fa-check-circle"></i> Confirmed</span>
+                                <span class="badge badge-confirmed">
+                                    <i class="fas fa-check-circle"></i> Confirmed
+                                </span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if status_exists and booking|length > 6 and booking[6] == 'confirmed' %}
-                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
-                                    <i class="fas fa-trash"></i> Cancel
-                                </a>
-                            {% elif not status_exists %}
-                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
-                                    <i class="fas fa-trash"></i> Cancel
-                                </a>
+                            {% if status_exists and booking|length > 6 %}
+                                {% if booking[6] == 'confirmed' %}
+                                    <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
+                                        <i class="fas fa-trash"></i> Cancel Booking
+                                    </a>
+                                {% elif booking[6] == 'pending' %}
+                                    <span class="cancel-btn disabled" style="background: #ffc107; color: #856404; cursor: wait;">
+                                        <i class="fas fa-hourglass-half"></i> Awaiting Confirmation
+                                    </span>
+                                {% endif %}
                             {% else %}
-                                <span class="cancel-btn disabled" style="background: #6c757d; cursor: not-allowed;">
-                                    <i class="fas fa-clock"></i> Pending
-                                </span>
+                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('⚠️ WARNING: Are you sure you want to cancel this booking?\n\nThis action cannot be undone!')">
+                                    <i class="fas fa-trash"></i> Cancel Booking
+                                </a>
                             {% endif %}
                         </td>
                     </tr>
@@ -343,7 +450,8 @@
             <div class="empty-state">
                 <i class="fas fa-calendar-check"></i>
                 <p>No bookings found</p>
-                <a href="/booking" class="btn-book-now">
+                <p style="font-size: 14px; margin-top: 10px;">Book your first slot to get started!</p>
+                <a href="/booking" class="btn-book-now" style="margin-top: 20px; display: inline-block;">
                     <i class="fas fa-plus-circle"></i> Book Your First Slot
                 </a>
             </div>
@@ -361,6 +469,11 @@
                 setTimeout(() => alert.remove(), 500);
             });
         }, 5000);
+        
+        // Auto-refresh page every 30 seconds to check for status updates
+        setTimeout(function() {
+            location.reload();
+        }, 30000);
     </script>
 </body>
 </html>
