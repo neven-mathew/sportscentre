@@ -216,9 +216,7 @@ def mybookings():
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         if not cursor.fetchone():
             try:
-                cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
-                db.commit()
-                cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
+                cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'pending'")
                 db.commit()
             except Exception as e:
                 print(f"Error adding status column: {e}")
@@ -227,37 +225,54 @@ def mybookings():
         cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
         all_bookings = cursor.fetchall()
         
+        # Get precise column names to prevent index mismatch errors
+        column_names = [desc[0].lower() for desc in cursor.description]
+        
         cursor.close()
         db.close()
         
-        # Normalize status to lowercase and handle NULL values
+        # Safely find exact indices for every column based on the database schema
+        id_idx = column_names.index('id') if 'id' in column_names else 0
+        name_idx = column_names.index('name') if 'name' in column_names else 1
+        sport_idx = column_names.index('sport') if 'sport' in column_names else 2
+        turf_idx = column_names.index('turf') if 'turf' in column_names else 3
+        time_idx = column_names.index('slot_time') if 'slot_time' in column_names else 4
+        date_idx = column_names.index('booking_date') if 'booking_date' in column_names else 5
+        status_idx = column_names.index('status') if 'status' in column_names else -1
+
         normalized_bookings = []
         confirmed_count = 0
         pending_count = 0
         
         for booking in all_bookings:
-            booking_list = list(booking)
-            if len(booking_list) > 6:
-                status = booking_list[6]
-                if status is None:
-                    status = 'pending'
-                else:
-                    status = str(status).lower()
-                booking_list[6] = status
-                
-                if status == 'confirmed':
-                    confirmed_count += 1
-                else:
-                    pending_count += 1
-            else:
-                booking_list.append('pending')
-                pending_count += 1
+            status = 'pending' # Default fallback
             
-            normalized_bookings.append(tuple(booking_list))
+            # Extract real status dynamically from its true index
+            if status_idx != -1 and len(booking) > status_idx:
+                db_status = booking[status_idx]
+                if db_status:
+                    status = str(db_status).strip().lower()
+            
+            if status == 'confirmed':
+                confirmed_count += 1
+            else:
+                pending_count += 1
+                
+            # Pack the tuple EXACTLY the way the mybookings.html template expects: 
+            # [id, name, sport, turf, time, date, status]
+            clean_booking = (
+                booking[id_idx],
+                booking[name_idx],
+                booking[sport_idx],
+                booking[turf_idx],
+                booking[time_idx],
+                booking[date_idx],
+                status
+            )
+            
+            normalized_bookings.append(clean_booking)
         
         total_bookings = len(normalized_bookings)
-        
-        print(f"DEBUG: Total={total_bookings}, Confirmed={confirmed_count}, Pending={pending_count}")
         
         return render_template(
             "mybookings.html",
@@ -459,6 +474,7 @@ def cancelpage(id):
             return redirect('/mybookings')
 
         # Only confirmed bookings can be cancelled by users
+        # Note: Depending on column index here, it might be safer to check by dynamically getting the status like we did in /mybookings, but if it works it works.
         if len(booking) > 6 and booking[6] != 'confirmed':
             flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
             return redirect('/mybookings')
