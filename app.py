@@ -227,53 +227,37 @@ def mybookings():
         
         # Get all bookings
         cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
-        all_bookings = cursor.fetchall()
-        
+        raw_bookings = cursor.fetchall()
         cursor.close()
         db.close()
         
-        # Debug: print each booking's status with index info
-        print("=== BOOKING STATUS DEBUG ===")
-        for i, booking in enumerate(all_bookings):
-            print(f"Booking {i+1}: ID={booking[0]}, Name={booking[1]}, Tuple length={len(booking)}")
-            if len(booking) > 6:
-                raw_status = booking[6]
-                # Normalize to lowercase for comparison
-                normalized_status = raw_status.lower() if raw_status else ''
-                print(f"  Raw status = '{raw_status}', Normalized = '{normalized_status}'")
-            else:
-                print("  No status column found")
-        print("==========================")
-        
-        # Normalize status values to lowercase for consistent processing
+        # Normalize status to lowercase and ensure it's a string
         normalized_bookings = []
-        for booking in all_bookings:
-            if len(booking) > 6 and booking[6]:
-                # Convert to lowercase and store in a list of tuples (replace the status)
-                booking_list = list(booking)
-                booking_list[6] = booking[6].lower()
-                normalized_bookings.append(tuple(booking_list))
-            else:
-                normalized_bookings.append(booking)
+        for b in raw_bookings:
+            booking_list = list(b)
+            if len(booking_list) > 6:
+                status = booking_list[6]
+                if status is None:
+                    status = 'pending'
+                else:
+                    status = status.lower()
+                booking_list[6] = status
+            normalized_bookings.append(tuple(booking_list))
         
         # Calculate statistics
         total = len(normalized_bookings)
         confirmed = 0
         pending = 0
-        
-        for booking in normalized_bookings:
-            if len(booking) > 6:
-                if booking[6] == 'confirmed':
+        for b in normalized_bookings:
+            if len(b) > 6:
+                if b[6] == 'confirmed':
                     confirmed += 1
-                elif booking[6] == 'pending':
-                    pending += 1
                 else:
-                    # If status is something else, count as pending
                     pending += 1
             else:
                 pending += 1
         
-        print(f"Statistics: Total={total}, Confirmed={confirmed}, Pending={pending}")
+        print(f"MyBookings -> Total: {total}, Confirmed: {confirmed}, Pending: {pending}")
         
         return render_template(
             "mybookings.html",
