@@ -495,10 +495,10 @@ def confirmcancel(id):
         flash(f'An error occurred while cancelling: {str(e)}', 'error')
         return redirect('/mybookings')
 
-# --- FIX DATABASE ROUTE (Without Auto-Confirming) ---
-@app.route('/fix-database')
-def fix_database():
-    """Fix database by adding status column without auto-confirming"""
+# --- DEBUG STATUS ROUTE ---
+@app.route('/debug-status')
+def debug_status():
+    """Debug route to check status values"""
     try:
         db = get_db_connection()
         if db is None:
@@ -506,23 +506,119 @@ def fix_database():
         
         cursor = db.cursor()
         
+        # Get all bookings with status
+        cursor.execute("SELECT id, name, status FROM bookings ORDER BY id DESC")
+        bookings = cursor.fetchall()
+        
+        cursor.close()
+        db.close()
+        
+        html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Status Debug</title>
+            <style>
+                body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+                .container { background: white; padding: 20px; border-radius: 8px; }
+                table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background: #4CAF50; color: white; }
+                .pending { color: orange; font-weight: bold; }
+                .confirmed { color: green; font-weight: bold; }
+                .null { color: red; font-weight: bold; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Booking Status Debug</h1>
+                 <table>
+                    <thead>
+                         <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status Value</th>
+                            <th>Status Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        """
+        
+        for booking in bookings:
+            status = booking[2]
+            status_class = ""
+            status_display = ""
+            
+            if status == 'confirmed':
+                status_class = "confirmed"
+                status_display = "✅ Confirmed"
+            elif status == 'pending':
+                status_class = "pending"
+                status_display = "⏳ Pending"
+            elif status is None:
+                status_class = "null"
+                status_display = "❌ NULL"
+            else:
+                status_class = "null"
+                status_display = f"❌ {status}"
+            
+            html += f"""
+                        <tr>
+                            <td>#{booking[0]}</td>
+                            <td>{booking[1]}</td>
+                            <td class="{status_class}">{booking[2]}</td>
+                            <td class="{status_class}">{status_display}</td>
+                        </tr>
+            """
+        
+        html += """
+                    </tbody>
+                 </table>
+                <br>
+                <a href="/fix-database" style="background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Fix Database</a>
+                <a href="/mybookings" style="background: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-left: 10px;">Back to My Bookings</a>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return html
+    
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+# --- FIX DATABASE ROUTE ---
+@app.route('/fix-database')
+def fix_database():
+    """Fix database by properly setting status values"""
+    try:
+        db = get_db_connection()
+        if db is None:
+            return "Database connection failed", 500
+        
+        cursor = db.cursor()
+        
+        messages = []
+        
         # Check if status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         status_exists = cursor.fetchone()
-        
-        messages = []
         
         if not status_exists:
             cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
             db.commit()
             messages.append("✅ Status column added successfully!")
-            
-            # Set existing bookings to pending so admin can review them
-            cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
-            db.commit()
-            messages.append("✅ Existing bookings set to 'pending' for admin review")
-        else:
-            messages.append("ℹ️ Status column already exists")
+        
+        # Update NULL or empty status to 'pending'
+        cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL OR status = ''")
+        updated_count = cursor.rowcount
+        messages.append(f"✅ Set {updated_count} bookings to 'pending' status")
+        
+        # Also update any invalid status values to 'pending'
+        cursor.execute("UPDATE bookings SET status = 'pending' WHERE status NOT IN ('pending', 'confirmed')")
+        invalid_count = cursor.rowcount
+        if invalid_count > 0:
+            messages.append(f"✅ Fixed {invalid_count} bookings with invalid status")
         
         # Get current bookings with status
         cursor.execute("SELECT id, name, status FROM bookings ORDER BY id DESC")
@@ -531,7 +627,7 @@ def fix_database():
         cursor.close()
         db.close()
         
-        # Calculate stats for display
+        # Calculate stats
         confirmed_count = sum(1 for b in bookings if b[2] == 'confirmed')
         pending_count = sum(1 for b in bookings if b[2] == 'pending')
         
@@ -552,6 +648,8 @@ def fix_database():
                 .stat-box {{ background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }}
                 .stat-number {{ font-size: 32px; font-weight: bold; }}
                 .stat-label {{ color: #666; margin-top: 5px; }}
+                .confirmed {{ color: green; font-weight: bold; }}
+                .pending {{ color: orange; font-weight: bold; }}
             </style>
         </head>
         <body>
@@ -579,9 +677,9 @@ def fix_database():
                 </div>
                 
                 <h2>Current Bookings with Status:</h2>
-                <table>
+                 <table>
                     <thead>
-                        <tr>
+                         <tr>
                             <th>ID</th>
                             <th>Name</th>
                             <th>Status</th>
@@ -591,23 +689,24 @@ def fix_database():
         """
         
         for booking in bookings:
-            status_color = "green" if booking[2] == 'confirmed' else "orange"
+            status_class = "confirmed" if booking[2] == 'confirmed' else "pending"
+            status_display = "✅ Confirmed" if booking[2] == 'confirmed' else "⏳ Pending"
             html += f"""
                         <tr>
                             <td>#{booking[0]}</td>
                             <td>{booking[1]}</td>
-                            <td style='color: {status_color}; font-weight: bold;'>{booking[2] or 'pending'}</td>
+                            <td class="{status_class}">{status_display}</td>
                         </tr>
             """
         
         html += """
                     </tbody>
-                </table>
+                 </table>
                 <br>
-                <p><strong>Note:</strong> Existing bookings are set to 'pending'. Admin needs to confirm them.</p>
-                <a href="/mybookings" class="btn">Go to My Bookings</a>
+                <p><strong>Note:</strong> All bookings are now set to 'pending'. Use the admin panel to confirm bookings.</p>
                 <a href="/admin" class="btn" style="background: #2196F3;">Go to Admin Panel</a>
-                <a href="/" class="btn" style="background: #666;">Go to Home</a>
+                <a href="/mybookings" class="btn">Go to My Bookings</a>
+                <a href="/debug-status" class="btn" style="background: #666;">Debug Status</a>
             </div>
         </body>
         </html>
