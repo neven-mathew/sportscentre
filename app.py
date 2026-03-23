@@ -205,7 +205,7 @@ def book():
         print(f"Error in book route: {e}")
         return f"An error occurred while booking: {str(e)}", 500
 
-# --- MY BOOKINGS ROUTE ---
+# --- MY BOOKINGS ROUTE (UPDATED WITH DEBUG) ---
 @app.route('/mybookings')
 def mybookings():
     """View user's own bookings"""
@@ -216,32 +216,61 @@ def mybookings():
         
         cursor = db.cursor()
         
-        # Check if status column exists and add if needed
+        # First, let's see what's in the database
+        cursor.execute("SHOW COLUMNS FROM bookings")
+        columns = cursor.fetchall()
+        print("Columns in bookings table:", [col[0] for col in columns])
+        
+        # Check if status column exists
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
-        if not cursor.fetchone():
+        status_exists = cursor.fetchone()
+        print(f"Status column exists: {status_exists}")
+        
+        if not status_exists:
             try:
                 cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'confirmed'")
                 db.commit()
-                cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
-                db.commit()
+                print("✅ Status column added")
             except Exception as e:
                 print(f"Error adding status column: {e}")
         
         # Update any bookings with NULL status
         cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status IS NULL")
         db.commit()
+        print(f"Updated NULL statuses")
         
         # Get all bookings
         cursor.execute("SELECT * FROM bookings ORDER BY booking_date DESC, slot_time DESC")
         all_bookings = cursor.fetchall()
+        
+        # Print each booking's status for debugging
+        for booking in all_bookings:
+            if len(booking) > 6:
+                print(f"Booking ID {booking[0]}: Status = {booking[6]}")
+            else:
+                print(f"Booking ID {booking[0]}: No status column data")
         
         cursor.close()
         db.close()
         
         # Calculate statistics
         total = len(all_bookings)
-        confirmed = sum(1 for b in all_bookings if len(b) > 6 and b[6] == 'confirmed')
-        pending = sum(1 for b in all_bookings if len(b) > 6 and b[6] == 'pending')
+        confirmed = 0
+        pending = 0
+        
+        for booking in all_bookings:
+            if len(booking) > 6:
+                if booking[6] == 'confirmed':
+                    confirmed += 1
+                elif booking[6] == 'pending':
+                    pending += 1
+                else:
+                    # If status is something else, default to confirmed
+                    confirmed += 1
+            else:
+                confirmed += 1
+        
+        print(f"Statistics - Total: {total}, Confirmed: {confirmed}, Pending: {pending}")
         
         return render_template(
             "mybookings.html",
@@ -496,7 +525,7 @@ def confirmcancel(id):
 # --- FIX DATABASE ROUTE ---
 @app.route('/fix-database')
 def fix_database():
-    """Fix database by adding status column"""
+    """Fix database by adding status column and updating all bookings"""
     try:
         db = get_db_connection()
         if db is None:
@@ -523,12 +552,21 @@ def fix_database():
         updated_count = cursor.rowcount
         messages.append(f"✅ Updated {updated_count} bookings to 'confirmed' status")
         
-        # Get current bookings
+        # Also update any pending that might be stuck
+        cursor.execute("UPDATE bookings SET status = 'confirmed' WHERE status = 'pending'")
+        db.commit()
+        messages.append(f"✅ Converted any pending bookings to confirmed")
+        
+        # Get current bookings with status
         cursor.execute("SELECT id, name, status FROM bookings ORDER BY id DESC")
         bookings = cursor.fetchall()
         
         cursor.close()
         db.close()
+        
+        # Calculate stats for display
+        confirmed_count = sum(1 for b in bookings if b[2] == 'confirmed')
+        pending_count = sum(1 for b in bookings if b[2] == 'pending')
         
         # Display results
         html = """
@@ -544,6 +582,10 @@ def fix_database():
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                 th { background: #4CAF50; color: white; }
                 .btn { display: inline-block; background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px; margin-right: 10px; }
+                .stats { display: flex; gap: 20px; margin: 20px 0; }
+                .stat-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; flex: 1; }
+                .stat-number { font-size: 32px; font-weight: bold; }
+                .stat-label { color: #666; margin-top: 5px; }
             </style>
         </head>
         <body>
@@ -554,14 +596,46 @@ def fix_database():
         for msg in messages:
             html += f"<p class='success'>✓ {msg}</p>"
         
-        html += "<h2>Current Bookings with Status:</h2>"
-        html += "<table><tr><th>ID</th><th>Name</th><th>Status</th></tr>"
+        html += f"""
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-number">{len(bookings)}</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" style="color: #28a745;">{confirmed_count}</div>
+                        <div class="stat-label">Confirmed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" style="color: #ffc107;">{pending_count}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                </div>
+                
+                <h2>Current Bookings with Status:</h2>
+                 <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        """
         
         for booking in bookings:
             status_color = "green" if booking[2] == 'confirmed' else "orange"
-            html += f"<tr><td>#{booking[0]}</td><td>{booking[1]}</td><td style='color: {status_color}; font-weight: bold;'>{booking[2]}</td></tr>"
+            html += f"""
+                        <tr>
+                            <td>#{booking[0]}</td>
+                            <td>{booking[1]}</td>
+                            <td style='color: {status_color}; font-weight: bold;'>{booking[2]}</td>
+                        </tr>
+            """
         
         html += """
+                    </tbody>
                 </table>
                 <br>
                 <a href="/mybookings" class="btn">Go to My Bookings</a>
