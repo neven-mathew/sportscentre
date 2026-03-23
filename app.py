@@ -474,9 +474,8 @@ def cancelpage(id):
             return redirect('/mybookings')
 
         # Only confirmed bookings can be cancelled by users
-        # Note: Depending on column index here, it might be safer to check by dynamically getting the status like we did in /mybookings, but if it works it works.
         if len(booking) > 6 and booking[6] != 'confirmed':
-            flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+            flash('Cancelation for confirmed booking can be done by contacting admin office . Please contact admin office', 'error')
             return redirect('/mybookings')
 
         return render_template("cancel.html", booking=booking)
@@ -509,7 +508,7 @@ def confirmcancel(id):
         if len(booking) > 6 and booking[6] != 'confirmed':
             cursor.close()
             db.close()
-            flash('Only confirmed bookings can be cancelled. Please contact admin.', 'error')
+            flash('Cancelation for confirmed booking can be done by contacting admin office . Please contact admin office', 'error')
             return redirect('/mybookings')
         
         # Delete the booking
