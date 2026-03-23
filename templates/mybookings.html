@@ -72,32 +72,28 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: white;
             border-radius: 15px;
             padding: 30px;
             margin-bottom: 30px;
             text-align: center;
-            color: white;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
         }
 
         .header h1 {
+            color: #333;
             font-size: 32px;
             margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
         }
 
         .header p {
+            color: #666;
             font-size: 16px;
             margin-bottom: 15px;
-            opacity: 0.9;
         }
 
         .refresh-btn {
-            background: rgba(255,255,255,0.2);
+            background: #27ae60;
             color: white;
             padding: 10px 20px;
             border-radius: 6px;
@@ -106,17 +102,18 @@
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: none;
+            cursor: pointer;
         }
 
         .refresh-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: #219653;
             transform: translateY(-2px);
         }
 
-        .stats-grid {
+        .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
@@ -125,9 +122,7 @@
             background: white;
             border-radius: 15px;
             padding: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            text-align: center;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             transition: transform 0.3s;
         }
@@ -136,8 +131,8 @@
             transform: translateY(-5px);
         }
 
-        .stat-info h3 {
-            color: #888;
+        .stat-card h3 {
+            color: #666;
             font-size: 14px;
             margin-bottom: 10px;
             text-transform: uppercase;
@@ -147,12 +142,18 @@
         .stat-number {
             font-size: 36px;
             font-weight: bold;
-            color: #333;
         }
 
-        .stat-icon {
-            font-size: 48px;
-            opacity: 0.3;
+        .stat-card.total .stat-number {
+            color: #27ae60;
+        }
+
+        .stat-card.confirmed .stat-number {
+            color: #28a745;
+        }
+
+        .stat-card.pending .stat-number {
+            color: #ffc107;
         }
 
         .bookings-table-wrapper {
@@ -217,6 +218,8 @@
             align-items: center;
             gap: 5px;
             transition: all 0.3s;
+            border: none;
+            cursor: pointer;
         }
 
         .cancel-btn:hover {
@@ -224,17 +227,10 @@
             transform: scale(1.05);
         }
 
-        .pending-btn {
-            background: #ffc107;
-            color: #856404;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+        .cancel-btn.disabled {
+            background: #6c757d;
             cursor: not-allowed;
-            opacity: 0.8;
+            pointer-events: none;
         }
 
         .empty-state {
@@ -287,18 +283,22 @@
             .navbar {
                 padding: 15px 20px;
             }
+            
             .logo {
                 font-size: 24px;
             }
+            
             .nav-links a span {
                 display: none;
             }
+            
             .booking-table th,
             .booking-table td {
                 padding: 10px;
                 font-size: 12px;
             }
-            .stats-grid {
+            
+            .stats {
                 grid-template-columns: 1fr;
             }
         }
@@ -336,33 +336,18 @@
             </a>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Total Bookings</h3>
-                    <div class="stat-number">{{ total_bookings }}</div>
-                </div>
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-alt"></i>
-                </div>
+        <div class="stats">
+            <div class="stat-card total">
+                <h3>Total Bookings</h3>
+                <div class="stat-number">{{ total_bookings }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Confirmed</h3>
-                    <div class="stat-number">{{ confirmed_count }}</div>
-                </div>
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
+            <div class="stat-card confirmed">
+                <h3>Confirmed</h3>
+                <div class="stat-number">{{ confirmed_count }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-info">
-                    <h3>Pending</h3>
-                    <div class="stat-number">{{ pending_count }}</div>
-                </div>
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
+            <div class="stat-card pending">
+                <h3>Pending</h3>
+                <div class="stat-number">{{ pending_count }}</div>
             </div>
         </div>
 
@@ -401,7 +386,7 @@
                                 </span>
                             {% else %}
                                 <span class="badge badge-pending">
-                                    <i class="fas fa-question-circle"></i> Pending
+                                    <i class="fas fa-question-circle"></i> {{ booking[6] or 'Unknown' }}
                                 </span>
                             {% endif %}
                         </td>
@@ -410,10 +395,14 @@
                                 <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
                                     <i class="fas fa-trash"></i> Cancel
                                 </a>
-                            {% else %}
-                                <span class="pending-btn">
+                            {% elif booking[6] == 'pending' %}
+                                <span class="cancel-btn disabled">
                                     <i class="fas fa-hourglass-half"></i> Awaiting
                                 </span>
+                            {% else %}
+                                <a href="/cancelpage/{{ booking[0] }}" class="cancel-btn" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                    <i class="fas fa-trash"></i> Cancel
+                                </a>
                             {% endif %}
                         </td>
                     </tr>
