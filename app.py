@@ -95,8 +95,6 @@ def booking():
             try:
                 cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
                 db.commit()
-                cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
-                db.commit()
             except Exception as e:
                 print(f"Error adding status column: {e}")
 
@@ -171,8 +169,6 @@ def book():
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT NULL")
             db.commit()
-            cursor.execute("UPDATE bookings SET status = 'pending' WHERE status IS NULL")
-            db.commit()
 
         # Check if slot already booked and confirmed
         cursor.execute("""
@@ -205,7 +201,7 @@ def book():
         print(f"Error in book route: {e}")
         return f"An error occurred while booking: {str(e)}", 500
 
-# --- MY BOOKINGS ROUTE ---
+# --- MY BOOKINGS ROUTE (UPDATED) ---
 @app.route('/mybookings')
 def mybookings():
     """View user's own bookings"""
@@ -234,13 +230,7 @@ def mybookings():
         cursor.close()
         db.close()
         
-        # Debug: Print raw statuses
-        print("=== RAW BOOKING STATUSES ===")
-        for booking in all_bookings:
-            if len(booking) > 6:
-                print(f"ID {booking[0]}: Raw status = '{booking[6]}'")
-        
-        # Normalize status to lowercase and handle all variations
+        # Normalize status to lowercase and handle NULL values
         normalized_bookings = []
         confirmed_count = 0
         pending_count = 0
@@ -249,18 +239,10 @@ def mybookings():
             booking_list = list(booking)
             if len(booking_list) > 6:
                 status = booking_list[6]
-                
-                # Convert to lowercase and normalize
                 if status is None:
                     status = 'pending'
                 else:
-                    status = str(status).lower().strip()
-                    # Handle variations
-                    if status in ['confirmed', 'confirm', 'approved', 'yes']:
-                        status = 'confirmed'
-                    else:
-                        status = 'pending'
-                
+                    status = str(status).lower()
                 booking_list[6] = status
                 
                 if status == 'confirmed':
@@ -275,11 +257,7 @@ def mybookings():
         
         total_bookings = len(normalized_bookings)
         
-        print(f"=== NORMALIZED STATUSES ===")
-        for booking in normalized_bookings:
-            print(f"ID {booking[0]}: Normalized status = '{booking[6]}'")
-        
-        print(f"Total: {total_bookings}, Confirmed: {confirmed_count}, Pending: {pending_count}")
+        print(f"DEBUG: Total={total_bookings}, Confirmed={confirmed_count}, Pending={pending_count}")
         
         return render_template(
             "mybookings.html",
@@ -346,7 +324,6 @@ def admin_panel():
         print(f"Error in admin panel: {e}")
         return f"An error occurred: {str(e)}", 500
 
-# --- ADMIN CONFIRM ROUTE (UPDATED) ---
 @app.route('/admin/confirm/<int:id>')
 @login_required
 def confirm_booking(id):
@@ -358,15 +335,15 @@ def confirm_booking(id):
         
         cursor = db.cursor()
         
-        # Check if the booking exists and is pending (case insensitive)
-        cursor.execute("SELECT * FROM bookings WHERE id=%s AND LOWER(status)='pending'", (id,))
+        # Check if the booking exists and is pending
+        cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='pending'", (id,))
         booking = cursor.fetchone()
         
         if not booking:
             flash('Booking not found or already processed', 'error')
             return redirect('/admin')
         
-        # Confirm the booking - set status to lowercase 'confirmed'
+        # Confirm the booking - set status to confirmed
         cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
         db.commit()
         
@@ -389,7 +366,6 @@ def confirm_booking(id):
         flash(f'Error confirming booking: {str(e)}', 'error')
         return redirect('/admin')
 
-# --- ADMIN REJECT ROUTE ---
 @app.route('/admin/reject/<int:id>')
 @login_required
 def reject_booking(id):
@@ -401,8 +377,8 @@ def reject_booking(id):
         
         cursor = db.cursor()
         
-        # Check if the booking exists and is pending (case insensitive)
-        cursor.execute("SELECT * FROM bookings WHERE id=%s AND LOWER(status)='pending'", (id,))
+        # Check if the booking exists and is pending
+        cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='pending'", (id,))
         booking = cursor.fetchone()
         
         if not booking:
@@ -425,7 +401,6 @@ def reject_booking(id):
         flash(f'Error rejecting booking: {str(e)}', 'error')
         return redirect('/admin')
 
-# --- ADMIN CANCEL BOOKING ROUTE ---
 @app.route('/admin/cancel_booking/<int:id>')
 @login_required
 def admin_cancel_booking(id):
@@ -439,7 +414,7 @@ def admin_cancel_booking(id):
         cursor = db.cursor()
         
         # Check if the booking exists and is confirmed
-        cursor.execute("SELECT * FROM bookings WHERE id=%s AND LOWER(status)='confirmed'", (id,))
+        cursor.execute("SELECT * FROM bookings WHERE id=%s AND status='confirmed'", (id,))
         booking = cursor.fetchone()
         
         if not booking:
