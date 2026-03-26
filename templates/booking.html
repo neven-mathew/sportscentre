@@ -270,6 +270,13 @@
             box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
         }
 
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+
         .submit-btn {
             background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
             color: white;
@@ -393,6 +400,7 @@
     {% endwith %}
 
     <div class="booking-container">
+        <!-- Date Selector -->
         <div class="date-selector">
             <form method="GET" action="/booking">
                 <div class="form-group">
@@ -407,6 +415,7 @@
             </form>
         </div>
 
+        <!-- Available Slots Display -->
         <div>
             <h2 class="section-title">Available Slots for {{ date }}</h2>
             <div class="slots-grid">
@@ -427,6 +436,7 @@
             </div>
         </div>
 
+        <!-- Booking Form -->
         <div class="booking-form-wrapper">
             <div class="form-header">
                 <h2>Book Your Slot</h2>
@@ -435,7 +445,6 @@
             
             <div class="booking-form">
                 <form action="/book" method="POST">
-                    
                     <div class="form-row">
                         <div class="form-group">
                             <label><i class="fa-regular fa-user"></i> Your Name</label>
@@ -443,17 +452,26 @@
                         </div>
                         
                         <div class="form-group">
-                            <label><i class="fa-regular fa-envelope"></i> Email Address</label>
-                            <input type="email" name="email" placeholder="Enter your email address" required>
+                            <label><i class="fa-regular fa-calendar"></i> Select Date</label>
+                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
                         </div>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label><i class="fa-regular fa-calendar"></i> Select Date</label>
-                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
+                            <label><i class="fa-regular fa-envelope"></i> Email Address</label>
+                            <input type="email" name="email" placeholder="Enter your email address" required>
+                            <small><i class="fas fa-info-circle"></i> Booking confirmation will be sent to this email</small>
                         </div>
                         
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> Phone Number</label>
+                            <input type="tel" name="phone" placeholder="Enter your phone number" required>
+                            <small><i class="fas fa-info-circle"></i> For contact purposes only</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label><i class="fa-solid fa-trophy"></i> Select Sport</label>
                             <select name="sport" required>
@@ -462,9 +480,7 @@
                                 <option value="Cricket">🏏 Cricket (9A)</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
+                        
                         <div class="form-group">
                             <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
                             <select name="turf" required>
@@ -473,8 +489,6 @@
                                 <option value="A2">Turf A2</option>
                             </select>
                         </div>
-                        
-                        <div class="form-group"></div>
                     </div>
                     
                     <div class="form-group">
