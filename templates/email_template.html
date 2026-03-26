@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+        <h2 style="color: #27ae60;">Hi {{ name }},</h2>
+        <p>Thanks for choosing <strong>Sports Center</strong>! We’ve received your request to book a slot, and we can’t wait to see you on the field.</p>
+        <p>To finalize your reservation and ensure the slot isn't released to other players, we require a <strong>₹{{ advance }} advance payment</strong>.</p>
+        
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0;">Booking Details</h3>
+            <p style="margin: 5px 0;"><strong>Date:</strong> {{ date }}</p>
+            <p style="margin: 5px 0;"><strong>Time Slot:</strong> {{ time }}</p>
+            <p style="margin: 5px 0;"><strong>Court/Pitch:</strong> {{ turf }}</p>
+            <p style="margin: 5px 0;"><strong>Total Amount:</strong> ₹{{ total }}</p>
+            <p style="margin: 5px 0; color: #dc3545;"><strong>Advance Due:</strong> ₹{{ advance }}</p>
+        </div>
+
+        <h3>How to Confirm</h3>
+        <p>Please scan the QR code below or pay via UPI to <strong>{{ PAYMENT_NUMBER }}</strong>:</p>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <img src="cid:qr_code" alt="Payment QR Code" style="width: 250px; border: 1px solid #ccc;">
+            <p style="font-size: 18px; font-weight: bold; color: #27ae60;">Pay ₹{{ advance }} Now</p>
+        </div>
+
+        <p style="background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;">
+            <strong>Please note:</strong> Your booking is currently marked as <strong>Pending</strong>. If the advance is not received within 1 hour, the slot will automatically be released.
+        </p>
+
+        <h3>Important Information</h3>
+        <ul>
+            <li>The remaining balance of <strong>₹{{ remaining }}</strong> can be paid at the venue.</li>
+            <li>Cancellations made less than 24 hours before the slot time may not be eligible for a refund.</li>
+        </ul>
+
+        <p>If you have any questions, just hit reply to this email or call us at <strong>7012631996</strong>.</p>
+        
+        <p>Get ready to play!<br>
+        <strong>Best regards,</strong><br>
+        The SPORTS CENTER Team</p>
+    </div>
+</body>
+</html>
