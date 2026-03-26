@@ -7,7 +7,7 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-# It's best to set this in Render Environment Variables as SECRET_KEY
+# Secure key for sessions
 app.secret_key = os.environ.get('SECRET_KEY', 'sports-center-secure-key-2026')
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
@@ -41,7 +41,6 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin123'
 
 def get_db_connection():
-    """Create database connection with error handling"""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         return connection
@@ -50,19 +49,16 @@ def get_db_connection():
         return None
 
 def ensure_schema(cursor, db):
-    """Ensures all necessary columns (status, email, phone) exist in the table"""
+    """Ensures necessary columns exist in the database"""
     try:
-        # Check Status
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'pending'")
         
-        # Check Email
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'email'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN email VARCHAR(120) DEFAULT NULL")
             
-        # Check Phone
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'phone'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN phone VARCHAR(20) DEFAULT NULL")
@@ -72,7 +68,6 @@ def ensure_schema(cursor, db):
         print(f"Schema update error: {e}")
 
 def login_required(f):
-    """Decorator to protect admin routes"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('logged_in'):
@@ -83,7 +78,6 @@ def login_required(f):
 
 @app.after_request
 def add_header(response):
-    """Add headers to prevent caching issues"""
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
@@ -128,6 +122,10 @@ def booking():
 
 @app.route('/book', methods=['POST'])
 def book():
+    """
+    This route triggers the immediate 'Booking Request Received' email 
+    to the customer upon form submission.
+    """
     try:
         db = get_db_connection()
         cursor = db.cursor()
@@ -144,7 +142,7 @@ def book():
         if not all([name, email, phone, sport, turf, slot, booking_date]):
             return "All fields are required!", 400
 
-        # Check for confirmed double bookings
+        # Prevent double booking of already confirmed slots
         cursor.execute("""
             SELECT id FROM bookings 
             WHERE turf=%s AND slot_time=%s AND booking_date=%s AND status='confirmed'
@@ -159,17 +157,29 @@ def book():
         """, (name, email, phone, sport, turf, slot, booking_date))
         db.commit()
 
-        # Send 'Request Received' email
+        # --- IMMEDIATE EMAIL NOTIFICATION ---
         try:
             msg = Message('Booking Request Received - Sports Center', recipients=[email])
-            msg.body = f"Hi {name},\n\nWe received your request for {turf} on {booking_date}. Your request is now with our admin for confirmation.\n\nYou will receive another email shortly with payment instructions once approved.\n\nThanks!"
+            msg.body = f"""Hi {name},
+
+Thank you for choosing Sports Center! We have received your booking request for:
+
+Court/Turf: {turf}
+Sport: {sport}
+Date: {booking_date}
+Time Slot: {slot}
+
+Your request is currently PENDING admin confirmation. Once the admin approves your request, you will receive a second email with payment instructions to finalize your booking.
+
+Best regards,
+The SPORTS CENTER Team"""
             mail.send(msg)
         except Exception as e:
-            print(f"Mail delivery failed: {e}")
+            print(f"Initial Booking Email failed: {e}")
 
         cursor.close()
         db.close()
-        flash('Request submitted! Check your email for updates.', 'success')
+        flash('Booking request submitted! Check your email for confirmation.', 'success')
         return redirect('/mybookings')
     except Exception as e:
         return f"Error: {str(e)}", 500
@@ -180,7 +190,6 @@ def mybookings():
         db = get_db_connection()
         cursor = db.cursor()
         ensure_schema(cursor, db)
-        # Fetching specific columns to match mybookings.html template index
         cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings ORDER BY booking_date DESC")
         bookings = cursor.fetchall()
         
@@ -233,6 +242,10 @@ def admin_panel():
 @app.route('/admin/confirm/<int:id>')
 @login_required
 def confirm_booking(id):
+    """
+    This route confirms the booking and sends the professional HTML 
+    email with the QR code and payment details.
+    """
     try:
         db = get_db_connection()
         cursor = db.cursor()
@@ -249,7 +262,7 @@ def confirm_booking(id):
         cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
         db.commit()
         
-        # --- SEND THE RICH HTML EMAIL ---
+        # --- SEND CONFIRMATION HTML EMAIL ---
         if email:
             msg = Message('Action Required: Confirm your Sports Center Booking', recipients=[email])
             msg.html = render_template('email_template.html', 
@@ -257,15 +270,15 @@ def confirm_booking(id):
                                      turf=turf, total=TOTAL_AMOUNT, advance=ADVANCE_AMOUNT, 
                                      remaining=REMAINING_AMOUNT, PAYMENT_NUMBER=PAYMENT_NUMBER)
 
-            # Embed the QR Code
+            # Embed the QR Code image from static folder
             try:
                 with app.open_resource("static/qr_code.png") as fp:
                     msg.attach("qr_code.png", "image/png", fp.read(), headers=[['Content-ID', '<qr_code>']])
                 mail.send(msg)
             except Exception as e:
-                print(f"Mail error: {e}")
+                print(f"Confirmation Mail error: {e}")
 
-        flash(f'Confirmed and Email sent to {name}!', 'success')
+        flash(f'Confirmed and Payment Email sent to {name}!', 'success')
         cursor.close()
         db.close()
         return redirect('/admin')
@@ -290,7 +303,7 @@ def reject_booking(id):
             
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
-        flash('Booking rejected and deleted.', 'info')
+        flash('Booking rejected and user notified.', 'info')
         cursor.close()
         db.close()
         return redirect('/admin')
