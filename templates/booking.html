@@ -6,529 +6,93 @@
     <title>Book a Slot - Sports Center</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .booking-container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        
+        /* Slots Styling */
+        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 10px; }
+        .slot-option input { display: none; }
+        .slot-label { display: block; padding: 12px; text-align: center; border: 2px solid #27ae60; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 14px; font-weight: 500; }
+        .slot-option input:checked + .slot-label { background: #27ae60; color: white; }
+        .slot-option input:disabled + .slot-label { background: #f0f0f0; border-color: #ddd; color: #ccc; cursor: not-allowed; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        /* Navigation Bar */
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 40px;
-            background-color: #ffffff;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .logo {
-            color: #27ae60;
-            font-size: 28px;
-            font-weight: 800;
-            font-style: italic;
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: #555;
-            font-weight: 500;
-            transition: color 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .nav-links a:hover {
-            color: #27ae60;
-        }
-
-        .btn-book {
-            background-color: #27ae60;
-            color: #ffffff !important;
-            padding: 10px 20px;
-            border-radius: 6px;
-        }
-
-        .btn-book:hover {
-            background-color: #219653;
-            transform: translateY(-2px);
-        }
-
-        /* Booking Container */
-        .booking-container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 20px;
-        }
-
-        /* Date Selector */
-        .date-selector {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .date-selector form {
-            display: flex;
-            gap: 15px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .date-selector .form-group {
-            flex: 2;
-            margin-bottom: 0;
-        }
-
-        .date-selector label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .date-selector input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .date-selector input:focus {
-            border-color: #27ae60;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
-        }
-
-        .view-slots-btn {
-            background: #27ae60;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-
-        .view-slots-btn:hover {
-            background: #219653;
-            transform: translateY(-2px);
-        }
-
-        /* Section Title */
-        .section-title {
-            font-size: 24px;
-            color: #333;
-            margin: 30px 0 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #27ae60;
-            display: inline-block;
-        }
-
-        /* Slots Grid */
-        .slots-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-            margin: 20px 0 30px;
-        }
-
-        .slot-option {
-            position: relative;
-        }
-
-        .slot-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .slot-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            background: #f5f5f5;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .slot-option input[type="radio"]:checked + .slot-label {
-            background: #27ae60;
-            border-color: #27ae60;
-            color: white;
-        }
-
-        .slot-option:hover .slot-label {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        .booked-slot {
-            background: #dc3545 !important;
-            color: white !important;
-            cursor: not-allowed !important;
-            opacity: 0.7;
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        /* Booking Form */
-        .booking-form-wrapper {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
-            margin-top: 30px;
-        }
-
-        .form-header {
-            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
-            color: white;
-            padding: 25px 30px;
-        }
-
-        .form-header h2 {
-            margin: 0;
-            font-size: 28px;
-        }
-
-        .form-header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-        }
-
-        .booking-form {
-            padding: 30px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #27ae60;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
-        }
-
-        .form-group small {
-            display: block;
-            margin-top: 5px;
-            color: #666;
-            font-size: 12px;
-        }
-
-        .submit-btn {
-            background: linear-gradient(135deg, #27ae60 0%, #219653 100%);
-            color: white;
-            padding: 14px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s;
-            margin-top: 10px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-        }
-
-        /* Alert Messages */
-        .alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            max-width: 400px;
-            padding: 15px 20px;
-            border-radius: 10px;
-            background: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            animation: slideInRight 0.5s ease-out;
-        }
-
-        .alert-success {
-            border-left: 4px solid #28a745;
-            color: #155724;
-        }
-
-        .alert-error {
-            border-left: 4px solid #dc3545;
-            color: #721c24;
-        }
-
-        .alert-info {
-            border-left: 4px solid #17a2b8;
-            color: #0c5460;
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100%);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 15px 20px;
-            }
-            
-            .logo {
-                font-size: 24px;
-            }
-            
-            .nav-links a span {
-                display: none;
-            }
-            
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .slots-grid {
-                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            }
-            
-            .date-selector form {
-                flex-direction: column;
-            }
-            
-            .date-selector .form-group {
-                width: 100%;
-            }
-            
-            .view-slots-btn {
-                width: 100%;
-            }
-            
-            .booking-container {
-                padding: 10px;
-            }
-        }
+        .btn-confirm { width: 100%; background: #27ae60; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .btn-confirm:hover { background: #219653; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <a href="/" class="logo">SportsCenter</a>
-        <div class="nav-links">
-            <a href="/"><i class="fas fa-home"></i> <span>Home</span></a>
-            <a href="/booking"><i class="fas fa-calendar-alt"></i> <span>Book Now</span></a>
-            <a href="/mybookings"><i class="fas fa-list"></i> <span>My Bookings</span></a>
-            <a href="/login" class="btn-book"><i class="fas fa-user-shield"></i> <span>Admin</span></a>
-        </div>
-    </nav>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <div class="booking-container">
-        <!-- Date Selector -->
-        <div class="date-selector">
-            <form method="GET" action="/booking">
-                <div class="form-group">
-                    <label><i class="fa-regular fa-calendar"></i> Select Date to View Available Slots</label>
-                    <input type="date" name="date" value="{{ date }}" min="{{ today_date }}">
-                </div>
-                <div>
-                    <button type="submit" class="view-slots-btn">
-                        <i class="fa-solid fa-eye"></i> View Slots
-                    </button>
-                </div>
-            </form>
+<div class="booking-container">
+    <h2 style="text-align: center; color: #27ae60;"><i class="fas fa-calendar-alt"></i> Reserve Your Spot</h2>
+    <form action="/book" method="POST">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Select Date</label>
+                <input type="date" name="date" id="date-picker" value="{{ date }}" min="{{ today_date }}" required onchange="updateDate()">
+            </div>
         </div>
 
-        <!-- Available Slots Display -->
-        <div>
-            <h2 class="section-title">Available Slots for {{ date }}</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" name="phone" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Select Sport</label>
+                <select name="sport" required>
+                    <option value="Football">Football</option>
+                    <option value="Cricket">Cricket</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Select Turf</label>
+                <select name="turf" required>
+                    <option value="Turf A1">Turf A1</option>
+                    <option value="Turf A2">Turf A2</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Select Time Slot</label>
             <div class="slots-grid">
-                {% for s in slots %}
-                    {% if s in booked %}
-                        <div class="booked-slot">
-                            <i class="fa-solid fa-lock"></i> {{ s }}
-                        </div>
-                    {% else %}
-                        <div class="slot-option">
-                            <input type="radio" name="slot_preview" value="{{ s }}" id="slot_preview_{{ loop.index }}" disabled>
-                            <label for="slot_preview_{{ loop.index }}" class="slot-label" style="background: #28a745; color: white; border-color: #28a745;">
-                                <i class="fa-solid fa-clock"></i> {{ s }}
-                            </label>
-                        </div>
-                    {% endif %}
+                {% for slot in slots %}
+                <div class="slot-option">
+                    <input type="radio" name="slot" value="{{ slot }}" id="slot_{{ loop.index }}" 
+                           {% if slot in booked %} disabled {% endif %} required>
+                    <label for="slot_{{ loop.index }}" class="slot-label">
+                        {{ slot }}
+                        {% if slot in booked %}<br><small>(Full)</small>{% endif %}
+                    </label>
+                </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Booking Form -->
-        <div class="booking-form-wrapper">
-            <div class="form-header">
-                <h2>Book Your Slot</h2>
-                <p>Fill in the details below to reserve your spot</p>
-            </div>
-            
-            <div class="booking-form">
-                <form action="/book" method="POST">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-user"></i> Your Name</label>
-                            <input type="text" name="name" placeholder="Enter your full name" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-calendar"></i> Select Date</label>
-                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-regular fa-envelope"></i> Email Address</label>
-                            <input type="email" name="email" placeholder="Enter your email address" required>
-                            <small><i class="fas fa-info-circle"></i> Booking confirmation will be sent to this email</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-phone"></i> Phone Number</label>
-                            <input type="tel" name="phone" placeholder="Enter your phone number" required>
-                            <small><i class="fas fa-info-circle"></i> For contact purposes only</small>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-trophy"></i> Select Sport</label>
-                            <select name="sport" required>
-                                <option value="">Choose a sport</option>
-                                <option value="Football">⚽ Football (7'S, 5'S)</option>
-                                <option value="Cricket">🏏 Cricket (9A)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
-                            <select name="turf" required>
-                                <option value="">Choose turf</option>
-                                <option value="A1">Turf A1</option>
-                                <option value="A2">Turf A2</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label><i class="fa-regular fa-clock"></i> Select Time Slot</label>
-                        <div class="slots-grid">
-                            {% for s in slots %}
-                                {% if s in booked %}
-                                    <div class="booked-slot">
-                                        <i class="fa-solid fa-lock"></i> {{ s }}
-                                    </div>
-                                {% else %}
-                                    <div class="slot-option">
-                                        <input type="radio" name="slot" value="{{ s }}" id="slot_{{ loop.index }}" required>
-                                        <label for="slot_{{ loop.index }}" class="slot-label">
-                                            <i class="fa-solid fa-clock"></i> {{ s }}
-                                        </label>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="submit-btn">
-                        <i class="fa-solid fa-check-circle"></i> Confirm Booking
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+        <button type="submit" class="btn-confirm"><i class="fas fa-check-circle"></i> Confirm Booking</button>
+    </form>
+</div>
 
-    <script>
-        // Auto-hide alerts after 5 seconds
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.style.opacity = '0';
-                alert.style.transition = 'opacity 0.5s';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
-    </script>
+<script>
+    function updateDate() {
+        const date = document.getElementById('date-picker').value;
+        window.location.href = "/booking?date=" + date;
+    }
+</script>
+
 </body>
 </html>
