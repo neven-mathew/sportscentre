@@ -7,7 +7,7 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-# Best practice: Set these in Render Environment Variables
+# Secure key for sessions - Use a variable on Render for production
 app.secret_key = os.environ.get('SECRET_KEY', 'sports-center-secure-key-2026')
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
@@ -40,7 +40,7 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin123'
 
 def get_db_connection():
-    """Establishes database connection"""
+    """Establish database connection"""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         return connection
@@ -49,7 +49,7 @@ def get_db_connection():
         return None
 
 def ensure_schema(cursor, db):
-    """Checks and adds necessary columns automatically"""
+    """Adds missing columns automatically to prevent app crashes"""
     try:
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         if not cursor.fetchone():
@@ -78,6 +78,7 @@ def login_required(f):
 
 @app.after_request
 def add_header(response):
+    """Prevent browser caching"""
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
@@ -114,7 +115,7 @@ def booking():
 
 @app.route('/book', methods=['POST'])
 def book():
-    """Triggers IMMEDIATE email request for payment with QR Code"""
+    """Captures data and sends immediate payment request email"""
     try:
         db = get_db_connection()
         cursor = db.cursor()
@@ -129,7 +130,8 @@ def book():
         booking_date = request.form.get('date')
 
         if not all([name, email, phone, sport, turf, slot, booking_date]):
-            return "All fields are required!", 400
+            flash('All fields are required!', 'error')
+            return redirect('/booking')
 
         cursor.execute("""
             INSERT INTO bookings (name, email, phone, sport, turf, slot_time, booking_date, status)
@@ -145,7 +147,6 @@ def book():
                                      turf=turf, total=TOTAL_AMOUNT, advance=ADVANCE_AMOUNT, 
                                      remaining=REMAINING_AMOUNT, PAYMENT_NUMBER=PAYMENT_NUMBER)
             try:
-                # Embed QR code from static folder
                 with app.open_resource("static/qr_code.png") as fp:
                     msg.attach("qr_code.png", "image/png", fp.read(), headers=[['Content-ID', '<qr_code>']])
                 mail.send(msg)
@@ -154,7 +155,7 @@ def book():
 
         cursor.close()
         db.close()
-        flash('Request submitted! Please check your email to pay the advance.', 'success')
+        flash('Request submitted! Check your email to pay the advance.', 'success')
         return redirect('/mybookings')
     except Exception as e:
         return f"Error: {str(e)}", 500
@@ -189,4 +190,89 @@ def logout():
     session.clear()
     return redirect('/')
 
-@app.route('/admin
+@app.route('/admin')
+@login_required
+def admin_panel():
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='pending' ORDER BY booking_date ASC")
+        pending = cursor.fetchall()
+        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='confirmed' ORDER BY booking_date DESC")
+        confirmed = cursor.fetchall()
+        db.close()
+        return render_template("admin.html", pending_bookings=pending, confirmed_bookings=confirmed, username=session.get('username'))
+    except Exception as e:
+        return f"Admin Panel Error: {str(e)}", 500
+
+@app.route('/admin/confirm/<int:id>')
+@login_required
+def confirm_booking(id):
+    """Triggers Payment Success email"""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("SELECT name, email, booking_date, slot_time, turf FROM bookings WHERE id=%s", (id,))
+        user = cursor.fetchone()
+        
+        if user:
+            name, email, b_date, b_time, b_turf = user
+            cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
+            db.commit()
+
+            if email:
+                msg = Message('Payment Received - Sports Center Booking Confirmed', recipients=[email])
+                msg.html = render_template('payment_confirmation_email.html', 
+                                         name=name, date=b_date, time=b_time, turf=b_turf)
+                try:
+                    mail.send(msg)
+                except Exception as e:
+                    print(f"Confirmation Email failed: {e}")
+
+        db.close()
+        flash(f'Confirmed and Success email sent to {name}!', 'success')
+        return redirect('/admin')
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+@app.route('/admin/reject/<int:id>')
+@login_required
+def reject_booking(id):
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
+        db.commit()
+        db.close()
+        flash('Booking rejected.', 'info')
+        return redirect('/admin')
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
+# --- USER CANCEL ROUTES ---
+
+@app.route('/cancelpage/<int:id>')
+def cancelpage(id):
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings WHERE id=%s", (id,))
+    booking = cursor.fetchone()
+    db.close()
+    if not booking:
+        flash('Booking not found', 'error')
+        return redirect('/mybookings')
+    return render_template("cancel.html", booking=booking)
+
+@app.route('/confirmcancel/<int:id>', methods=['POST'])
+def confirmcancel(id):
+    db = get_db_connection()
+    cursor = db.cursor()
+    cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
+    db.commit()
+    db.close()
+    flash('Booking cancelled successfully.', 'success')
+    return redirect('/mybookings')
+
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
