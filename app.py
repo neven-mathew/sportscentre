@@ -7,9 +7,10 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
+# Secure key for session management
 app.secret_key = os.environ.get('SECRET_KEY', 'sports-center-secure-key-2026')
 
-# --- MAIL CONFIGURATION ---
+# --- MAIL CONFIGURATION (Using SSL Port 465) ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
@@ -19,7 +20,7 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Sports Center Admin', os.environ.get('MAIL
 
 mail = Mail(app)
 
-# --- DB CONFIG ---
+# --- DATABASE CONFIGURATION ---
 DB_CONFIG = {
     'host': 'autorack.proxy.rlwy.net',
     'user': 'root',
@@ -32,7 +33,8 @@ DB_CONFIG = {
 def get_db_connection():
     try:
         return mysql.connector.connect(**DB_CONFIG)
-    except Error:
+    except Error as e:
+        print(f"Connection Error: {e}")
         return None
 
 def login_required(f):
@@ -43,7 +45,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- ROUTES ---
+# --- PUBLIC ROUTES ---
 
 @app.route('/')
 def homepage():
@@ -67,7 +69,7 @@ def booking():
 @app.route('/book', methods=['POST'])
 def book():
     db = get_db_connection()
-    if not db: return "Database Error", 500
+    if not db: return "Database Connection Failed", 500
     cursor = db.cursor()
     try:
         name = request.form.get('name')
@@ -95,7 +97,6 @@ def book():
 
 @app.route('/payment/<name>')
 def payment_page(name):
-    """Fixes the 'Not Found' error by providing this specific URL"""
     return render_template('payment.html', name=name)
 
 @app.route('/mybookings')
@@ -113,13 +114,15 @@ def mybookings():
         cursor.close()
         db.close()
 
+# --- ADMIN ROUTES ---
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         if request.form.get('username') == 'admin' and request.form.get('password') == 'admin123':
             session['logged_in'] = True
             return redirect(url_for('admin_panel'))
-        flash('Invalid Credentials')
+        flash('Invalid Credentials', 'error')
     return render_template('login.html')
 
 @app.route('/admin')
@@ -150,30 +153,36 @@ def confirm_booking(id):
             cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
             db.commit()
             if user[1]:
-                msg = Message('Booking Confirmed!', recipients=[user[1]])
-                msg.html = render_template('payment_confirmation_email.html', name=user[0], date=user[2], time=user[3], turf=user[4])
-                try: mail.send(msg)
+                try:
+                    msg = Message('Booking Confirmed - Sports Center', recipients=[user[1]])
+                    msg.html = render_template('payment_confirmation_email.html', name=user[0], date=user[2], time=user[3], turf=user[4])
+                    mail.send(msg)
                 except: pass
+        flash('Booking confirmed successfully!', 'success')
         return redirect(url_for('admin_panel'))
     finally:
         cursor.close()
         db.close()
 
-@app.route('/admin/reject/<int:id>')
+# --- FIXED: Matches the URL in your screenshot ---
+@app.route('/admin/cancel_booking/<int:id>')
 @login_required
-def reject_booking(id):
+def admin_cancel_booking(id):
     db = get_db_connection()
     cursor = db.cursor()
     try:
         cursor.execute("SELECT name, email, booking_date, slot_time FROM bookings WHERE id=%s", (id,))
         user = cursor.fetchone()
-        if user and user[1]:
-            msg = Message('Booking Cancelled', recipients=[user[1]])
-            msg.html = render_template('cancellation_email.html', name=user[0], date=user[2], time=user[3])
-            try: mail.send(msg)
-            except: pass
-        cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
-        db.commit()
+        if user:
+            cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
+            db.commit()
+            if user[1]:
+                try:
+                    msg = Message('Booking Cancelled - Sports Center', recipients=[user[1]])
+                    msg.html = render_template('cancellation_email.html', name=user[0], date=user[2], time=user[3])
+                    mail.send(msg)
+                except: pass
+            flash(f'Booking #{id} has been rejected/cancelled.', 'info')
         return redirect(url_for('admin_panel'))
     finally:
         cursor.close()
