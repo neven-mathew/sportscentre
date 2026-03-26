@@ -58,9 +58,16 @@ def booking():
     cursor = db.cursor()
     try:
         selected_date = request.args.get("date") or d.today().strftime("%Y-%m-%d")
+        
+        # Fetch confirmed slots for the selected date
         cursor.execute("SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'", (selected_date,))
         booked = [row[0] for row in cursor.fetchall()]
-        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM","11:00 PM"]
+        
+        # Full List of Time Slots
+        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM",
+                 "12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM",
+                 "06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM","11:00 PM"]
+        
         return render_template("booking.html", slots=slots, booked=booked, date=selected_date, today_date=d.today().strftime("%Y-%m-%d"))
     finally:
         cursor.close()
@@ -83,6 +90,7 @@ def book():
         cursor.execute("INSERT INTO bookings (name, email, phone, sport, turf, slot_time, booking_date, status) VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')", (name, email, phone, sport, turf, slot, b_date))
         db.commit()
 
+        # Send Automated Email
         if email:
             try:
                 msg = Message('Action Required: Payment for Booking', recipients=[email])
@@ -129,69 +137,4 @@ def login():
 @login_required
 def admin_panel():
     db = get_db_connection()
-    if not db: return "Database Error", 500
-    cursor = db.cursor()
-    try:
-        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='pending'")
-        pending = cursor.fetchall()
-        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='confirmed'")
-        confirmed = cursor.fetchall()
-        return render_template("admin.html", pending_bookings=pending, confirmed_bookings=confirmed)
-    finally:
-        cursor.close()
-        db.close()
-
-@app.route('/admin/confirm/<int:id>')
-@login_required
-def confirm_booking(id):
-    db = get_db_connection()
-    cursor = db.cursor()
-    try:
-        cursor.execute("SELECT name, email, booking_date, slot_time, turf FROM bookings WHERE id=%s", (id,))
-        user = cursor.fetchone()
-        if user:
-            cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
-            db.commit()
-            if user[1]:
-                try:
-                    msg = Message('Booking Confirmed - Sports Center', recipients=[user[1]])
-                    msg.html = render_template('payment_confirmation_email.html', name=user[0], date=user[2], time=user[3], turf=user[4])
-                    mail.send(msg)
-                except: pass
-        flash('Booking confirmed successfully!', 'success')
-        return redirect(url_for('admin_panel'))
-    finally:
-        cursor.close()
-        db.close()
-
-# --- FIXED: Matches the URL in your screenshot ---
-@app.route('/admin/cancel_booking/<int:id>')
-@login_required
-def admin_cancel_booking(id):
-    db = get_db_connection()
-    cursor = db.cursor()
-    try:
-        cursor.execute("SELECT name, email, booking_date, slot_time FROM bookings WHERE id=%s", (id,))
-        user = cursor.fetchone()
-        if user:
-            cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
-            db.commit()
-            if user[1]:
-                try:
-                    msg = Message('Booking Cancelled - Sports Center', recipients=[user[1]])
-                    msg.html = render_template('cancellation_email.html', name=user[0], date=user[2], time=user[3])
-                    mail.send(msg)
-                except: pass
-            flash(f'Booking #{id} has been rejected/cancelled.', 'info')
-        return redirect(url_for('admin_panel'))
-    finally:
-        cursor.close()
-        db.close()
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('homepage'))
-
-if __name__ == '__main__':
-    app.run(debug=False)
+    if not
