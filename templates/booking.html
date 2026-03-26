@@ -393,7 +393,6 @@
     {% endwith %}
 
     <div class="booking-container">
-        <!-- Date Selector -->
         <div class="date-selector">
             <form method="GET" action="/booking">
                 <div class="form-group">
@@ -408,7 +407,6 @@
             </form>
         </div>
 
-        <!-- Available Slots Display -->
         <div>
             <h2 class="section-title">Available Slots for {{ date }}</h2>
             <div class="slots-grid">
@@ -429,7 +427,6 @@
             </div>
         </div>
 
-        <!-- Booking Form -->
         <div class="booking-form-wrapper">
             <div class="form-header">
                 <h2>Book Your Slot</h2>
@@ -438,6 +435,7 @@
             
             <div class="booking-form">
                 <form action="/book" method="POST">
+                    
                     <div class="form-row">
                         <div class="form-group">
                             <label><i class="fa-regular fa-user"></i> Your Name</label>
@@ -445,12 +443,17 @@
                         </div>
                         
                         <div class="form-group">
-                            <label><i class="fa-regular fa-calendar"></i> Select Date</label>
-                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
+                            <label><i class="fa-regular fa-envelope"></i> Email Address</label>
+                            <input type="email" name="email" placeholder="Enter your email address" required>
                         </div>
                     </div>
                     
                     <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-regular fa-calendar"></i> Select Date</label>
+                            <input type="date" name="date" value="{{ date }}" min="{{ today_date }}" required>
+                        </div>
+                        
                         <div class="form-group">
                             <label><i class="fa-solid fa-trophy"></i> Select Sport</label>
                             <select name="sport" required>
@@ -459,7 +462,9 @@
                                 <option value="Cricket">🏏 Cricket (9A)</option>
                             </select>
                         </div>
-                        
+                    </div>
+                    
+                    <div class="form-row">
                         <div class="form-group">
                             <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
                             <select name="turf" required>
@@ -468,6 +473,8 @@
                                 <option value="A2">Turf A2</option>
                             </select>
                         </div>
+                        
+                        <div class="form-group"></div>
                     </div>
                     
                     <div class="form-group">
