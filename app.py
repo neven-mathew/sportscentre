@@ -136,16 +136,16 @@ def mybookings():
         db = get_db_connection()
         cursor = db.cursor()
         ensure_schema(cursor, db)
-        # Fixed Column Order: 0:id, 1:name, 2:phone, 3:sport, 4:turf, 5:slot_time, 6:booking_date, 7:status
         cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings ORDER BY id DESC")
-        bookings = cursor.fetchall()
+        all_bookings = cursor.fetchall()
         
-        total_bookings = len(bookings)
-        confirmed_count = sum(1 for b in bookings if b[7] == 'confirmed')
-        pending_count = total_bookings - confirmed_count
+        total_bookings = len(all_bookings)
+        confirmed_count = sum(1 for b in all_bookings if b[7] == 'confirmed')
+        pending_count = sum(1 for b in all_bookings if b[7] == 'pending')
+        cancelled_count = sum(1 for b in all_bookings if b[7] == 'cancelled')
         
         db.close()
-        return render_template("mybookings.html", bookings=bookings, total_bookings=total_bookings, confirmed_count=confirmed_count, pending_count=pending_count)
+        return render_template("mybookings.html", bookings=all_bookings, total_bookings=total_bookings, confirmed_count=confirmed_count, pending_count=pending_count, cancelled_count=cancelled_count)
     except Exception as e:
         return f"Error: {str(e)}", 500
 
@@ -202,6 +202,39 @@ def confirm_booking(id):
     except Exception as e:
         return f"Error: {str(e)}", 500
 
+@app.route('/admin/cancel-unpaid/<int:id>')
+@login_required
+def cancel_unpaid(id):
+    """Admin route to cancel a booking due to non-payment and display/send notice"""
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute("SELECT name, email, booking_date, slot_time FROM bookings WHERE id=%s", (id,))
+        booking = cursor.fetchone()
+
+        if booking:
+            name, email, b_date, b_time = booking
+            # Update status to 'cancelled' so it releases the slot
+            cursor.execute("UPDATE bookings SET status='cancelled' WHERE id=%s", (id,))
+            db.commit()
+
+            # --- SEND CANCELLATION EMAIL ---
+            if email:
+                msg = Message('Booking Cancelled - Payment Not Received', recipients=[email])
+                # Using the template specifically for cancellation notice
+                msg.html = render_template('cancellation.html', name=name, date=b_date, time=b_time)
+                try: mail.send(msg)
+                except Exception as e: print(f"Cancellation Email failed: {e}")
+
+            db.close()
+            flash(f'Booking for {name} has been cancelled for non-payment.', 'info')
+            return redirect('/admin')
+            
+        db.close()
+        return "Booking not found", 404
+    except Exception as e:
+        return f"Error: {str(e)}", 500
+
 @app.route('/admin/reject/<int:id>')
 @login_required
 def reject_booking(id):
@@ -211,7 +244,7 @@ def reject_booking(id):
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
         db.close()
-        flash('Booking rejected.', 'info')
+        flash('Booking deleted from records.', 'info')
         return redirect('/admin')
     except Exception as e:
         return f"Error: {str(e)}", 500
@@ -221,7 +254,7 @@ def logout():
     session.clear()
     return redirect('/')
 
-# --- CANCEL ROUTES ---
+# --- CANCEL ROUTES (USER SIDE) ---
 
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
