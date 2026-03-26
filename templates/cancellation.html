@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Cancelled - Sports Center Njarakkal</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 50px; }
+        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; line-height: 1.6; }
+        .header { border-bottom: 2px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px; }
+        .status-badge { background-color: #ff4d4d; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.8em; text-transform: uppercase; float: right; }
+        .details-box { background-color: #f9f9f9; border-left: 5px solid #d9534f; padding: 20px; margin: 25px 0; border-radius: 4px; }
+        .details-box h4 { margin-top: 0; color: #333; }
+        .footer-text { font-size: 0.85em; color: #777; margin-top: 30px; border-top: 1px solid #eee; pt: 20px; }
+        .btn { display: inline-block; background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px; }
+        .btn:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <span class="status-badge">Cancelled</span>
+        <h2 style="margin: 0; color: #333;">Booking Update</h2>
+    </div>
+
+    <p>Dear <strong>{{ booking.customer_name }}</strong>,</p>
+    <p>We hope this email finds you well.</p>
+    <p>We are writing to inform you that your booking slot has been <strong>cancelled</strong> as we have not received the payment for your reservation.</p>
+
+    <div class="details-box">
+        <h4>Booking Details:</h4>
+        <strong>Name:</strong> {{ booking.customer_name }}<br>
+        <strong>Time Slot:</strong> {{ booking.date }} at {{ booking.start_time }} – {{ booking.end_time }}
+    </div>
+
+    <p>Since payment was not received within the required timeframe, your slot has been released and is now available for other customers to book.</p>
+    
+    <p>If you would still like to book this time slot or another available slot, please visit our website or contact us directly to complete your booking.</p>
+
+    <a href="/mybookings" class="btn">Return to Bookings</a>
+
+    <div class="footer-text">
+        <p><strong>Sports Center - Njarakkal</strong><br>
+        Vypin, Kochi, Kerala</p>
+    </div>
+</div>
+
+</body>
+</html>
