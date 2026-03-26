@@ -331,12 +331,17 @@
                             </div>
                             
                             <div class="form-group">
-                                <label><i class="fa-regular fa-calendar"></i> Select Date</label>
-                                <input type="date" name="date" min="{{ today_date }}" required>
+                                <label><i class="fa-regular fa-envelope"></i> Email Address</label>
+                                <input type="email" name="email" placeholder="Enter your email address" required>
                             </div>
                         </div>
                         
                         <div class="form-row">
+                            <div class="form-group">
+                                <label><i class="fa-regular fa-calendar"></i> Select Date</label>
+                                <input type="date" name="date" min="{{ today_date }}" required>
+                            </div>
+                            
                             <div class="form-group">
                                 <label><i class="fa-solid fa-trophy"></i> Select Sport</label>
                                 <select name="sport" required>
@@ -345,7 +350,9 @@
                                     <option value="Cricket">🏏 Cricket (9A)</option>
                                 </select>
                             </div>
-                            
+                        </div>
+                        
+                        <div class="form-row">
                             <div class="form-group">
                                 <label><i class="fa-solid fa-map-marker-alt"></i> Select Turf</label>
                                 <select name="turf" required>
@@ -354,6 +361,8 @@
                                     <option value="A2">Turf A2</option>
                                 </select>
                             </div>
+                            
+                            <div class="form-group"></div>
                         </div>
                         
                         <div class="form-group">
@@ -441,7 +450,6 @@
                 </div>
             </div>
             
-            <!-- Available Slots Section -->
             <div class="bookings-table-wrapper">
                 <div style="padding: 30px;">
                     <h2 class="section-title">Available Slots</h2>
@@ -477,7 +485,6 @@
                 </div>
             </div>
             
-            <!-- Confirmed Bookings Table -->
             <div class="bookings-table-wrapper">
                 <div style="padding: 30px;">
                     <h2 class="section-title">Confirmed Bookings</h2>
@@ -485,7 +492,7 @@
                     <div style="overflow-x: auto;">
                         <table class="booking-table">
                             <thead>
-                                脂
+                                <tr>
                                     <th>Name</th>
                                     <th>Sport</th>
                                     <th>Turf</th>
@@ -523,7 +530,6 @@
         </div>
     </section>
     
-    <!-- Prominent Admin Login Section -->
     <div class="admin-footer">
         <h3 style="color: #555; margin-bottom: 15px;">Administrator Access</h3>
         <a href="/login" class="admin-link">
