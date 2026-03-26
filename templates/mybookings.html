@@ -1,13 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - Sports Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #7a73e6; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
+        h2 { color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* Flash Message Styling */
+        .flash-msg { padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: bold; text-align: center; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #666; }
+        .status-pending { color: orange; font-weight: bold; }
+        .status-confirmed { color: green; font-weight: bold; }
+        .btn-cancel { color: #dc3545; text-decoration: none; font-weight: bold; }
+        .btn-locked { color: #999; cursor: not-allowed; font-size: 13px; }
+    </style>
+</head>
+<body>
+
 <div class="container">
-    <h2>My Bookings</h2>
+    <h2><i class="fas fa-list-ul"></i> My Bookings</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
-          <div style="padding: 15px; margin-bottom: 20px; border-radius: 8px; 
-                      background-color: {% if category == 'success' %}#d4edda{% elif category == 'error' %}#f8d7da{% else %}#d1ecf1{% endif %};
-                      color: {% if category == 'success' %}#155724{% elif category == 'error' %}#721c24{% else %}#0c5460{% endif %};
-                      border: 1px solid currentColor;">
+          <div class="flash-msg {{ category }}">
             {{ message }}
           </div>
         {% endfor %}
@@ -17,31 +43,47 @@
     <table>
         <thead>
             <tr>
-                <th>Date</th><th>Time</th><th>Status</th><th>Action</th>
+                <th>Booking ID</th>
+                <th>Date</th>
+                <th>Time Slot</th>
+                <th>Sport / Turf</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for booking in bookings %}
             <tr>
+                <td>#{{ booking[0] }}</td>
                 <td>{{ booking[6] }}</td>
                 <td>{{ booking[5] }}</td>
+                <td>{{ booking[3] }} ({{ booking[4] }})</td>
                 <td>
-                    <span style="color: {% if booking[7] == 'confirmed' %}green{% else %}orange{% endif %};">
+                    <span class="status-{{ booking[7] }}">
+                        <i class="fas {% if booking[7] == 'confirmed' %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
                         {{ booking[7]|capitalize }}
                     </span>
                 </td>
                 <td>
                     {% if booking[7] == 'confirmed' %}
-                        <span style="color: #888; font-size: 12px; cursor: help;" 
-                              title="Please contact admin at 7012631996 to cancel confirmed slots.">
-                            Locked <i class="fas fa-lock"></i>
+                        <span class="btn-locked" onclick="alert('Confirmed bookings can only be cancelled by contacting admin. Please contact 7012631996.')">
+                            <i class="fas fa-lock"></i> Contact Admin
                         </span>
                     {% else %}
-                        <a href="/cancelpage/{{ booking[0] }}" style="color: red; text-decoration: none;">Cancel</a>
+                        <a href="/cancelpage/{{ booking[0] }}" class="btn-cancel">
+                            <i class="fas fa-trash-alt"></i> Cancel
+                        </a>
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="/booking" style="text-decoration: none; color: #7a73e6; font-weight: bold;">+ Make Another Booking</a>
+    </div>
 </div>
+
+</body>
+</html>
