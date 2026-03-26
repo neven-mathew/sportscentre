@@ -9,7 +9,7 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'sports-center-secure-key-2026')
 
-# --- MAIL CONFIG ---
+# --- MAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 465
 app.config['MAIL_USE_SSL'] = True
@@ -19,6 +19,7 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Sports Center Admin', os.environ.get('MAIL
 
 mail = Mail(app)
 
+# --- DATABASE CONFIGURATION ---
 DB_CONFIG = {
     'host': 'autorack.proxy.rlwy.net',
     'user': 'root',
@@ -31,7 +32,8 @@ DB_CONFIG = {
 def get_db_connection():
     try:
         return mysql.connector.connect(**DB_CONFIG)
-    except Error: return None
+    except Error:
+        return None
 
 def login_required(f):
     @wraps(f)
@@ -41,7 +43,12 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- USER ROUTES ---
+# --- PUBLIC ROUTES ---
+
+@app.route('/')
+def homepage():
+    """Ensure homepage.html exists in your templates folder"""
+    return render_template('homepage.html')
 
 @app.route('/booking')
 def booking():
@@ -52,7 +59,9 @@ def booking():
         selected_date = request.args.get("date") or d.today().strftime("%Y-%m-%d")
         cursor.execute("SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'", (selected_date,))
         booked = [row[0] for row in cursor.fetchall()]
-        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM","12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM","06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM","11:00 PM"]
+        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM","10:00 AM","11:00 AM",
+                 "12:00 PM","01:00 PM","02:00 PM","03:00 PM","04:00 PM","05:00 PM",
+                 "06:00 PM","07:00 PM","08:00 PM","09:00 PM","10:00 PM","11:00 PM"]
         return render_template("booking.html", slots=slots, booked=booked, date=selected_date, today_date=d.today().strftime("%Y-%m-%d"))
     finally:
         cursor.close()
@@ -61,26 +70,40 @@ def booking():
 @app.route('/book', methods=['POST'])
 def book():
     db = get_db_connection()
+    if not db: return "Database Error", 500
     cursor = db.cursor()
     try:
-        name, email, phone = request.form.get('name'), request.form.get('email'), request.form.get('phone')
-        sport, turf, slot, b_date = request.form.get('sport'), request.form.get('turf'), request.form.get('slot'), request.form.get('date')
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        sport = request.form.get('sport')
+        turf = request.form.get('turf')
+        slot = request.form.get('slot')
+        b_date = request.form.get('date')
+
         cursor.execute("INSERT INTO bookings (name, email, phone, sport, turf, slot_time, booking_date, status) VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')", (name, email, phone, sport, turf, slot, b_date))
         db.commit()
+
         if email:
             try:
                 msg = Message('Payment Required - Sports Center', recipients=[email])
                 msg.html = render_template('email_template.html', name=name, date=b_date, time=slot, turf=turf, total=800, advance=300, remaining=500, PAYMENT_NUMBER='7012631996')
                 mail.send(msg)
             except: pass
+            
         return redirect(url_for('payment_page', name=name))
     finally:
         cursor.close()
         db.close()
 
+@app.route('/payment/<name>')
+def payment_page(name):
+    return render_template('payment.html', name=name)
+
 @app.route('/mybookings')
 def mybookings():
     db = get_db_connection()
+    if not db: return "Database Error", 500
     cursor = db.cursor()
     try:
         cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings ORDER BY id DESC")
@@ -110,6 +133,31 @@ def confirmcancel(id):
 
 # --- ADMIN ROUTES ---
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        if request.form.get('username') == 'admin' and request.form.get('password') == 'admin123':
+            session['logged_in'] = True
+            return redirect(url_for('admin_panel'))
+        flash('Invalid Credentials', 'error')
+    return render_template('login.html')
+
+@app.route('/admin')
+@login_required
+def admin_panel():
+    db = get_db_connection()
+    if not db: return "Database Error", 500
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='pending'")
+        pending = cursor.fetchall()
+        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status, email FROM bookings WHERE status='confirmed'")
+        confirmed = cursor.fetchall()
+        return render_template("admin.html", pending_bookings=pending, confirmed_bookings=confirmed)
+    finally:
+        cursor.close()
+        db.close()
+
 @app.route('/admin/confirm/<int:id>')
 @login_required
 def confirm_booking(id):
@@ -121,7 +169,7 @@ def confirm_booking(id):
         if user:
             cursor.execute("UPDATE bookings SET status='confirmed' WHERE id=%s", (id,))
             db.commit()
-            flash(f"Booking for {user[0]} confirmed and notification sent!", "success")
+            flash(f"Booking for {user[0]} confirmed!", "success")
             if user[1]:
                 try:
                     msg = Message('Booking Confirmed!', recipients=[user[1]])
@@ -141,8 +189,16 @@ def admin_cancel_booking(id):
     try:
         cursor.execute("DELETE FROM bookings WHERE id=%s", (id,))
         db.commit()
-        flash(f"Booking #{id} has been removed/cancelled.", "info")
+        flash(f"Booking #{id} has been removed.", "info")
         return redirect(url_for('admin_panel'))
     finally:
         cursor.close()
         db.close()
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('homepage'))
+
+if __name__ == '__main__':
+    app.run(debug=False)
