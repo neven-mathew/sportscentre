@@ -7,7 +7,7 @@ import os
 from functools import wraps
 
 app = Flask(__name__)
-# Secure key for sessions - Use a variable on Render for production
+# Secure key for sessions
 app.secret_key = os.environ.get('SECRET_KEY', 'sports-center-secure-key-2026')
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
@@ -40,7 +40,6 @@ ADMIN_USERNAME = 'admin'
 ADMIN_PASSWORD = 'admin123'
 
 def get_db_connection():
-    """Establish database connection"""
     try:
         connection = mysql.connector.connect(**DB_CONFIG)
         return connection
@@ -49,23 +48,20 @@ def get_db_connection():
         return None
 
 def ensure_schema(cursor, db):
-    """Adds missing columns automatically to prevent app crashes"""
+    """Automatically maintains database structure"""
     try:
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'status'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'pending'")
-        
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'email'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN email VARCHAR(120) DEFAULT NULL")
-            
         cursor.execute("SHOW COLUMNS FROM bookings LIKE 'phone'")
         if not cursor.fetchone():
             cursor.execute("ALTER TABLE bookings ADD COLUMN phone VARCHAR(20) DEFAULT NULL")
-            
         db.commit()
     except Exception as e:
-        print(f"Schema auto-update error: {e}")
+        print(f"Schema update error: {e}")
 
 def login_required(f):
     @wraps(f)
@@ -78,7 +74,6 @@ def login_required(f):
 
 @app.after_request
 def add_header(response):
-    """Prevent browser caching"""
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '-1'
@@ -94,20 +89,13 @@ def homepage():
 def booking():
     try:
         db = get_db_connection()
-        if db is None: return "Database connection failed", 500
         cursor = db.cursor()
         ensure_schema(cursor, db)
-
         selected_date = request.args.get("date") or d.today().strftime("%Y-%m-%d")
         cursor.execute("SELECT slot_time FROM bookings WHERE booking_date=%s AND status='confirmed'", (selected_date,))
         booked = [row[0] for row in cursor.fetchall()]
-        
         today_date = d.today().strftime("%Y-%m-%d")
-        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM", "10:00 AM","11:00 AM", 
-                 "12:00 PM","01:00 PM","02:00 PM","03:00 PM", "04:00 PM","05:00 PM", 
-                 "06:00 PM","07:00 PM","08:00 PM","09:00 PM", "10:00 PM","11:00 PM"]
-
-        cursor.close()
+        slots = ["06:00 AM","07:00 AM","08:00 AM","09:00 AM", "10:00 AM","11:00 AM", "12:00 PM","01:00 PM","02:00 PM","03:00 PM", "04:00 PM","05:00 PM", "06:00 PM","07:00 PM","08:00 PM","09:00 PM", "10:00 PM","11:00 PM"]
         db.close()
         return render_template("booking.html", slots=slots, booked=booked, date=selected_date, today_date=today_date)
     except Exception as e:
@@ -115,47 +103,29 @@ def booking():
 
 @app.route('/book', methods=['POST'])
 def book():
-    """Captures data and sends immediate payment request email"""
     try:
         db = get_db_connection()
         cursor = db.cursor()
         ensure_schema(cursor, db)
 
-        name = request.form.get('name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
-        sport = request.form.get('sport')
-        turf = request.form.get('turf')
-        slot = request.form.get('slot')
-        booking_date = request.form.get('date')
+        name, email, phone = request.form.get('name'), request.form.get('email'), request.form.get('phone')
+        sport, turf, slot, booking_date = request.form.get('sport'), request.form.get('turf'), request.form.get('slot'), request.form.get('date')
 
-        if not all([name, email, phone, sport, turf, slot, booking_date]):
-            flash('All fields are required!', 'error')
-            return redirect('/booking')
-
-        cursor.execute("""
-            INSERT INTO bookings (name, email, phone, sport, turf, slot_time, booking_date, status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')
-        """, (name, email, phone, sport, turf, slot, booking_date))
+        cursor.execute("INSERT INTO bookings (name, email, phone, sport, turf, slot_time, booking_date, status) VALUES (%s, %s, %s, %s, %s, %s, %s, 'pending')", (name, email, phone, sport, turf, slot, booking_date))
         db.commit()
 
-        # --- SEND IMMEDIATE PAYMENT REQUEST EMAIL ---
+        # --- SEND IMMEDIATE PAYMENT EMAIL ---
         if email:
-            msg = Message('Action Required: Confirm your Sports Center Booking', recipients=[email])
-            msg.html = render_template('email_template.html', 
-                                     name=name, date=booking_date, time=slot, 
-                                     turf=turf, total=TOTAL_AMOUNT, advance=ADVANCE_AMOUNT, 
-                                     remaining=REMAINING_AMOUNT, PAYMENT_NUMBER=PAYMENT_NUMBER)
+            msg = Message('Action Required: Payment for Sports Center Booking', recipients=[email])
+            msg.html = render_template('email_template.html', name=name, date=booking_date, time=slot, turf=turf, total=TOTAL_AMOUNT, advance=ADVANCE_AMOUNT, remaining=REMAINING_AMOUNT, PAYMENT_NUMBER=PAYMENT_NUMBER)
             try:
                 with app.open_resource("static/qr_code.png") as fp:
                     msg.attach("qr_code.png", "image/png", fp.read(), headers=[['Content-ID', '<qr_code>']])
                 mail.send(msg)
-            except Exception as e:
-                print(f"Booking Email failed: {e}")
+            except Exception as e: print(f"Initial Payment Email failed: {e}")
 
-        cursor.close()
         db.close()
-        flash('Request submitted! Check your email to pay the advance.', 'success')
+        flash('Booking Request Sent! Please check your email to pay the advance.', 'success')
         return redirect('/mybookings')
     except Exception as e:
         return f"Error: {str(e)}", 500
@@ -166,10 +136,16 @@ def mybookings():
         db = get_db_connection()
         cursor = db.cursor()
         ensure_schema(cursor, db)
-        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings ORDER BY booking_date DESC")
+        # Fixed Column Order: 0:id, 1:name, 2:phone, 3:sport, 4:turf, 5:slot_time, 6:booking_date, 7:status
+        cursor.execute("SELECT id, name, phone, sport, turf, slot_time, booking_date, status FROM bookings ORDER BY id DESC")
         bookings = cursor.fetchall()
+        
+        total_bookings = len(bookings)
+        confirmed_count = sum(1 for b in bookings if b[7] == 'confirmed')
+        pending_count = total_bookings - confirmed_count
+        
         db.close()
-        return render_template("mybookings.html", bookings=bookings, total_bookings=len(bookings))
+        return render_template("mybookings.html", bookings=bookings, total_bookings=total_bookings, confirmed_count=confirmed_count, pending_count=pending_count)
     except Exception as e:
         return f"Error: {str(e)}", 500
 
@@ -184,11 +160,6 @@ def login():
             return redirect('/admin')
         flash('Invalid credentials', 'error')
     return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/')
 
 @app.route('/admin')
 @login_required
@@ -208,7 +179,6 @@ def admin_panel():
 @app.route('/admin/confirm/<int:id>')
 @login_required
 def confirm_booking(id):
-    """Triggers Payment Success email"""
     try:
         db = get_db_connection()
         cursor = db.cursor()
@@ -222,12 +192,9 @@ def confirm_booking(id):
 
             if email:
                 msg = Message('Payment Received - Sports Center Booking Confirmed', recipients=[email])
-                msg.html = render_template('payment_confirmation_email.html', 
-                                         name=name, date=b_date, time=b_time, turf=b_turf)
-                try:
-                    mail.send(msg)
-                except Exception as e:
-                    print(f"Confirmation Email failed: {e}")
+                msg.html = render_template('payment_confirmation_email.html', name=name, date=b_date, time=b_time, turf=b_turf)
+                try: mail.send(msg)
+                except Exception as e: print(f"Confirmation Email failed: {e}")
 
         db.close()
         flash(f'Confirmed and Success email sent to {name}!', 'success')
@@ -249,7 +216,12 @@ def reject_booking(id):
     except Exception as e:
         return f"Error: {str(e)}", 500
 
-# --- USER CANCEL ROUTES ---
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/')
+
+# --- CANCEL ROUTES ---
 
 @app.route('/cancelpage/<int:id>')
 def cancelpage(id):
